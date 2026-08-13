@@ -183,7 +183,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="hidden lg:flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded border border-slate-700 text-xs">
             <div className="text-[10px] uppercase tracking-wider text-slate-400 font-bold">VENTAS DEL DÍA</div>
             <div className="font-mono font-bold text-emerald-400 text-sm">
-              ${todaySalesTotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              ${todaySalesTotal.toLocaleString('es-AR', { minimumFractionDigits: 2 })}
             </div>
           </div>
 

@@ -40,7 +40,7 @@ export function exportInventoryCSV(products: any[]) {
     p.stock || 0,
     p.minStock || 0,
     `"${p.unit || 'piece'}"`,
-    `"${p.updatedAt ? new Date(p.updatedAt).toLocaleString('es-MX') : ''}"`,
+    `"${p.updatedAt ? new Date(p.updatedAt).toLocaleString('es-AR') : ''}"`,
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -64,7 +64,7 @@ export function exportSalesCSV(sales: any[]) {
 
   const rows = sales.map((s) => [
     s.ticketNumber,
-    `"${new Date(s.timestamp).toLocaleString('es-MX')}"`,
+    `"${new Date(s.timestamp).toLocaleString('es-AR')}"`,
     `"${s.registerName || ''}"`,
     `"${s.cashierName || ''}"`,
     `"${s.customerName || 'Público General'}"`,

@@ -113,7 +113,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Ventas Totales Hoy
             </span>
             <span className="text-xl font-black text-emerald-600">
-              ${(stats?.todayTotalSales || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              ${(stats?.todayTotalSales || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
             </span>
           </div>
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -127,7 +127,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Ganancia Est. Hoy
             </span>
             <span className="text-xl font-black text-blue-600">
-              ${(stats?.todayProfit || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+              ${(stats?.todayProfit || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
             </span>
           </div>
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
