@@ -20,14 +20,15 @@ import {
   Cell,
   CartesianGrid,
 } from 'recharts';
-import { Sale, Product, CashRegister, Department, PosSummaryStats } from '../types/pos';
+import { Sale, Product, CashRegister, Department, Customer, PosSummaryStats } from '../types/pos';
 
 interface AnalyticsViewProps {
   sales: Sale[];
   products: Product[];
   registers: CashRegister[];
-  departments: Department[];
-  stats: PosSummaryStats | null;
+  customers?: Customer[];
+  departments?: Department[];
+  stats?: PosSummaryStats | null;
 }
 
 const COLORS = ['#2563eb', '#0284c7', '#0d9488', '#059669', '#d97706', '#dc2626', '#7c3aed'];
@@ -36,10 +37,37 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
   sales = [],
   products = [],
   registers = [],
+  customers = [],
   departments = [],
   stats = null,
 }) => {
   const safeSales = sales || [];
+
+  // Today's Sales Calculation
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayCompletedSales = safeSales.filter((s) => {
+    if (s.status !== 'COMPLETED') return false;
+    const saleDateStr = new Date(s.timestamp).toISOString().split('T')[0];
+    return saleDateStr === todayStr;
+  });
+
+  // Calculate Metrics (Fallback to dynamic calculation if stats is null)
+  const todayTotalSales = stats?.todayTotalSales ?? todayCompletedSales.reduce((acc, s) => acc + s.total, 0);
+
+  const todayProfit = stats?.todayProfit ?? todayCompletedSales.reduce((acc, s) => {
+    const saleProfit = (s.items || []).reduce((itemAcc, item) => {
+      // Find matching product in catalog if item.product.costPrice is missing
+      const catalogProd = (products || []).find((p) => p.id === item.productId);
+      const unitCost = item.product?.costPrice ?? catalogProd?.costPrice ?? 0;
+      const totalCost = unitCost * item.quantity;
+      return itemAcc + (item.total - totalCost);
+    }, 0);
+    return acc + saleProfit;
+  }, 0);
+
+  const activeRegistersCount = stats?.activeRegistersCount ?? (registers || []).filter((r) => r.isOpen).length;
+
+  const totalCreditPending = stats?.totalCreditPending ?? (customers || []).reduce((acc, c) => acc + (c.creditBalance || 0), 0);
 
   // Aggregate Sales by Department
   const deptSalesMap: Record<string, number> = {};
@@ -113,7 +141,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Ventas Totales Hoy
             </span>
             <span className="text-xl font-black text-emerald-600">
-              ${(stats?.todayTotalSales || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              ${todayTotalSales.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
@@ -127,7 +155,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Ganancia Est. Hoy
             </span>
             <span className="text-xl font-black text-blue-600">
-              ${(stats?.todayProfit || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
+              ${todayProfit.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
@@ -141,7 +169,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Cajas Activas
             </span>
             <span className="text-xl font-black text-slate-800">
-              {stats?.activeRegistersCount || 0} Cajas
+              {activeRegistersCount} {activeRegistersCount === 1 ? 'Caja' : 'Cajas'}
             </span>
           </div>
           <div className="p-3 bg-cyan-50 text-cyan-600 rounded-xl">
@@ -155,7 +183,7 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({
               Crédito Pendiente
             </span>
             <span className="text-xl font-black text-indigo-600">
-              ${(stats?.totalCreditPending || 0).toFixed(2)}
+              ${totalCreditPending.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
           </div>
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">

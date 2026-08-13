@@ -486,7 +486,13 @@ export default function App() {
         )}
 
         {activeTab === 'analytics' && (
-          <AnalyticsView sales={sales} products={products} registers={registers} />
+          <AnalyticsView
+            sales={sales}
+            products={products}
+            registers={registers}
+            customers={customers}
+            departments={departments}
+          />
         )}
 
         {activeTab === 'settings' && (
