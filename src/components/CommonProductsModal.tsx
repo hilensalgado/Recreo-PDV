@@ -13,7 +13,7 @@ import {
   Edit,
   Trash2,
   Lock,
-  ShieldAlert,
+  Save,
 } from 'lucide-react';
 import { CommonProduct } from '../types/pos';
 
@@ -37,6 +37,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
   // Free custom concept state
   const [customName, setCustomName] = useState('');
   const [customPrice, setCustomPrice] = useState('');
+  const [saveAsPreset, setSaveAsPreset] = useState(true);
 
   // Admin New / Edit Preset Modal State
   const [showAdminPresetModal, setShowAdminPresetModal] = useState(false);
@@ -70,6 +71,15 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
     e.preventDefault();
     const p = parseFloat(customPrice);
     if (!customName.trim() || isNaN(p) || p <= 0) return;
+
+    // Save as permanent preset in database if checkbox is enabled & user is Admin
+    if (saveAsPreset && isAdmin && onSaveCommonProduct) {
+      onSaveCommonProduct({
+        name: customName.trim(),
+        price: p,
+        iconName: 'Grid',
+      });
+    }
 
     onAddCommonItem(customName.trim(), p);
     setCustomName('');
@@ -140,7 +150,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
             {isAdmin ? (
               <button
                 onClick={handleOpenAddPreset}
-                className="px-3 py-1.5 bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs rounded-xl shadow transition-colors flex items-center gap-1 border border-purple-400"
+                className="px-3 py-1.5 bg-purple-700 hover:bg-purple-600 text-white font-extrabold text-xs rounded-xl shadow transition-colors flex items-center gap-1 border border-purple-400 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Nuevo Predeterminado
               </button>
@@ -150,7 +160,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
               </span>
             )}
 
-            <button onClick={onClose} className="text-purple-200 hover:text-white">
+            <button onClick={onClose} className="text-purple-200 hover:text-white cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
@@ -224,37 +234,60 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
           </div>
 
           {/* Custom Non-Barcode Item Form */}
-          <div className="border-t border-slate-200 pt-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 block">
-              O ingresa un concepto manual libre:
+          <div className="border-t border-slate-200 pt-4 space-y-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block">
+              O ingresa un producto / servicio manual:
             </span>
-            <form onSubmit={handleAddCustom} className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Nombre del servicio o producto libre (ej. Copia doble cara)"
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                className="flex-2 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <div className="relative flex-1">
-                <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
-                  $
-                </span>
+
+            <form onSubmit={handleAddCustom} className="space-y-2">
+              <div className="flex gap-2">
                 <input
-                  type="number"
-                  step="0.5"
-                  placeholder="Precio"
-                  value={customPrice}
-                  onChange={(e) => setCustomPrice(e.target.value)}
-                  className="w-full pl-6 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  type="text"
+                  required
+                  placeholder="Nombre del servicio o producto (ej. Factura con Dulce de Leche)"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="flex-2 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
+                <div className="relative flex-1">
+                  <span className="absolute left-3 top-2.5 text-xs font-bold text-slate-400">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    step="0.5"
+                    required
+                    placeholder="Precio ($ ARS)"
+                    value={customPrice}
+                    onChange={(e) => setCustomPrice(e.target.value)}
+                    className="w-full pl-6 pr-3 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Agregar a Venta
+                </button>
               </div>
-              <button
-                type="submit"
-                className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1"
-              >
-                <Plus className="w-4 h-4" /> Agregar
-              </button>
+
+              {/* Save as Permanent Preset Checkbox */}
+              {isAdmin ? (
+                <label className="flex items-center gap-2 p-2 bg-purple-50 border border-purple-200 rounded-lg cursor-pointer text-xs font-bold text-purple-900 select-none">
+                  <input
+                    type="checkbox"
+                    checked={saveAsPreset}
+                    onChange={(e) => setSaveAsPreset(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+                  />
+                  <Save className="w-3.5 h-3.5 text-purple-700" />
+                  <span>Guardar también este producto en la lista permanente para futuras ventas</span>
+                </label>
+              ) : (
+                <p className="text-[10px] text-slate-400 italic">
+                  (Para guardar productos en la lista permanente se requiere rol de Administrador)
+                </p>
+              )}
             </form>
           </div>
         </div>
@@ -263,7 +296,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
         <div className="p-3 bg-slate-100 border-t border-slate-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-5 py-2 bg-white hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-colors"
+            className="px-5 py-2 bg-white hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-colors cursor-pointer"
           >
             Cerrar
           </button>
@@ -292,7 +325,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
                 <input
                   type="text"
                   required
-                  placeholder="ej. Bolsa Ecológica Chica"
+                  placeholder="ej. Factura con Dulce de Leche"
                   value={presetName}
                   onChange={(e) => setPresetName(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800"
@@ -300,12 +333,12 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Precio de Venta ($) *:</label>
+                <label className="font-bold text-slate-700 block mb-1">Precio de Venta ($ ARS) *:</label>
                 <input
                   type="number"
                   step="0.5"
                   required
-                  placeholder="15.00"
+                  placeholder="500.00"
                   value={presetPrice}
                   onChange={(e) => setPresetPrice(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-black text-slate-800 text-sm"
@@ -320,12 +353,12 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800"
                 >
                   <option value="Grid">Cuadrícula (Predeterminado)</option>
+                  <option value="Utensils">Comida / Facturas / Snacks</option>
                   <option value="ShoppingBag">Bolsa de Compras</option>
                   <option value="Snowflake">Hielo / Refrigerado</option>
                   <option value="Copy">Copia / Impresión</option>
                   <option value="Printer">Impresora / Documentos</option>
-                  <option value="Smartphone">Recarga Celular</option>
-                  <option value="Utensils">Comida / Snacks</option>
+                  <option value="Smartphone">Recarga Celular / SUBE</option>
                   <option value="Box">Caja / Empaque</option>
                 </select>
               </div>
@@ -334,15 +367,15 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowAdminPresetModal(false)}
-                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl"
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl cursor-pointer"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl shadow"
+                  className="flex-1 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl shadow cursor-pointer"
                 >
-                  {editPresetId ? 'Guardar Cambios' : 'Guardar Producto'}
+                  {editPresetId ? 'Guardar Cambios' : 'Guardar Producto en Lista'}
                 </button>
               </div>
             </form>
