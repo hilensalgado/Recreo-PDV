@@ -49,6 +49,8 @@ export const api = {
   getRegisters: () => fetchJson<CashRegister[]>('/api/registers'),
   saveRegister: (reg: Partial<CashRegister> & { name: string }) =>
     fetchJson<CashRegister>('/api/registers', { method: 'POST', body: JSON.stringify(reg) }),
+  deleteRegister: (id: string) =>
+    fetchJson<{ success: boolean }>(`/api/registers/${id}`, { method: 'DELETE' }),
 
   // Shifts
   getShifts: () => fetchJson<CashShift[]>('/api/shifts'),
@@ -79,6 +81,8 @@ export const api = {
   getCustomers: () => fetchJson<Customer[]>('/api/customers'),
   saveCustomer: (cust: Partial<Customer> & { name: string }) =>
     fetchJson<Customer>('/api/customers', { method: 'POST', body: JSON.stringify(cust) }),
+  deleteCustomer: (id: string) =>
+    fetchJson<{ success: boolean }>(`/api/customers/${id}`, { method: 'DELETE' }),
   getCustomerMovements: () => fetchJson<CustomerCreditMovement[]>('/api/customers/movements'),
   addCustomerPayment: (data: {
     customerId: string;

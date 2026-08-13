@@ -167,7 +167,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }`}
                   >
                     <span>{c.name}</span>
-                    <span className="text-[10px] text-slate-400">PIN: {c.pin}</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold bg-slate-700 text-slate-300">
+                      {c.role}
+                    </span>
                   </button>
                 ))}
               </div>

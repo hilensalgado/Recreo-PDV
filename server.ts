@@ -82,6 +82,15 @@ async function startServer() {
     }
   });
 
+  app.delete('/api/registers/:id', (req, res) => {
+    try {
+      db.deleteRegister(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Shifts
   app.get('/api/shifts', (req, res) => {
     try {
@@ -144,6 +153,15 @@ async function startServer() {
       res.json(customer);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/customers/:id', (req, res) => {
+    try {
+      db.deleteCustomer(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 

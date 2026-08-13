@@ -33,6 +33,10 @@ import { CommonProductsModal } from './components/CommonProductsModal';
 import { HoldTicketsModal } from './components/HoldTicketsModal';
 import { ThermalReceiptModal } from './components/ThermalReceiptModal';
 import { ShortcutsHelpModal } from './components/ShortcutsHelpModal';
+import { PINModal } from './components/PINModal';
+import { CashCutReceiptModal } from './components/CashCutReceiptModal';
+import { CustomerPaymentReceiptModal } from './components/CustomerPaymentReceiptModal';
+import { CustomerCreditMovement } from './types/pos';
 
 export default function App() {
   // Navigation
@@ -48,6 +52,7 @@ export default function App() {
   const [cashiers, setCashiers] = useState<Cashier[]>([]);
   const [holdTickets, setHoldTickets] = useState<HoldTicket[]>([]);
   const [commonProducts, setCommonProducts] = useState<CommonProduct[]>([]);
+  const [customerMovements, setCustomerMovements] = useState<CustomerCreditMovement[]>([]);
 
   // Selection state
   const [activeRegister, setActiveRegister] = useState<CashRegister | null>(null);
@@ -71,6 +76,15 @@ export default function App() {
   const [pendingHoldCart, setPendingHoldCart] = useState<{ items: CartItem[]; customer?: Customer } | null>(null);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
   const [completedSaleReceipt, setCompletedSaleReceipt] = useState<Sale | null>(null);
+  
+  // New modal states for PIN verification and additional receipts
+  const [showPinModal, setShowPinModal] = useState(false);
+  const [pendingCashierChange, setPendingCashierChange] = useState<Cashier | null>(null);
+  const [completedShiftReceipt, setCompletedShiftReceipt] = useState<CashShift | null>(null);
+  const [completedCustomerPayment, setCompletedCustomerPayment] = useState<{
+    customer: Customer;
+    movement: CustomerCreditMovement;
+  } | null>(null);
 
   // Loading & error state
   const [loading, setLoading] = useState(true);
@@ -82,7 +96,7 @@ export default function App() {
       setLoading(true);
       setErrorMsg(null);
 
-      const [pData, dData, cData, sData, rData, shData, caData, htData, cpData] = await Promise.all([
+      const [pData, dData, cData, sData, rData, shData, caData, htData, cpData, cmData] = await Promise.all([
         api.getProducts(),
         api.getDepartments(),
         api.getCustomers(),
@@ -92,6 +106,7 @@ export default function App() {
         api.getCashiers(),
         api.getHoldTickets(),
         api.getCommonProducts(),
+        api.getCustomerMovements(),
       ]);
 
       setProducts(pData || []);
@@ -103,6 +118,7 @@ export default function App() {
       setCashiers(caData || []);
       setHoldTickets(htData || []);
       setCommonProducts(cpData || []);
+      setCustomerMovements(cmData || []);
 
       // Default register & cashier selection
       if (rData && rData.length > 0) {
@@ -234,8 +250,8 @@ export default function App() {
     try {
       const closed = await api.closeShift(activeShift.id, declaredCash, notes);
       setActiveShift(null);
+      setCompletedShiftReceipt(closed);
       loadData();
-      alert('Corte de caja guardado con éxito');
     } catch (err: any) {
       alert(err.message || 'Error al cerrar corte de caja');
     }
@@ -337,7 +353,11 @@ export default function App() {
         activeCashier={activeCashier}
         activeShift={activeShift}
         onSelectRegister={handleSelectRegister}
-        onSelectCashier={setActiveCashier}
+        onSelectCashier={(cashier) => {
+          if (activeCashier && activeCashier.id === cashier.id) return;
+          setPendingCashierChange(cashier);
+          setShowPinModal(true);
+        }}
         onOpenRegisterModal={() => setActiveTab('settings')}
         onOpenShortcutsModal={() => setShowShortcutsModal(true)}
         onRefreshData={loadData}
@@ -347,14 +367,27 @@ export default function App() {
       {/* Function Key Tabs Navigation */}
       <NavigationTabs
         activeTab={activeTab}
-        onSelectTab={setActiveTab}
+        onSelectTab={(tab) => {
+          if (tab === 'common') {
+            setActiveTab('sales');
+            setShowCommonModal(true);
+          } else if (tab === 'movements') {
+            setActiveTab('sales');
+            setShowMovementsModal(true);
+          } else if (tab === 'hold') {
+            setActiveTab('sales');
+            setShowHoldModal(true);
+          } else {
+            setActiveTab(tab);
+          }
+        }}
         holdTicketsCount={holdTickets.length}
         lowStockCount={lowStockCount}
       />
 
       {/* Main View Display Area */}
       <main className="flex-1 overflow-hidden p-1">
-        {activeTab === 'sales' && (
+        {(activeTab === 'sales' || activeTab === 'common' || activeTab === 'movements' || activeTab === 'hold') && (
           <SalesView
             products={products}
             customers={customers}
@@ -365,9 +398,9 @@ export default function App() {
               setShowCommonModal(true);
             }}
             onOpenMovements={() => setShowMovementsModal(true)}
-            onOpenHoldTickets={(items, customer, restoreFn) => {
-              setPendingHoldCart({ items, customer });
-              if (restoreFn) setRestoreHoldCb(() => restoreFn);
+            onOpenHoldTickets={(cartItems, customer, restoreFn) => {
+              setPendingHoldCart({ items: cartItems, customer });
+              setRestoreHoldCb(() => restoreFn);
               setShowHoldModal(true);
             }}
             activeRegisterName={activeRegister ? activeRegister.name : 'Caja 1'}
@@ -396,19 +429,28 @@ export default function App() {
         {activeTab === 'customers' && (
           <CustomersView
             customers={customers}
+            movements={customerMovements}
             onSaveCustomer={async (c) => {
               await api.saveCustomer(c);
               loadData();
             }}
+            onDeleteCustomer={async (id) => {
+              await api.deleteCustomer(id);
+              loadData();
+            }}
             onAddPayment={async (customerId, amount) => {
               if (!activeCashier || !activeRegister) return;
-              await api.addCustomerPayment({
+              const mov = await api.addCustomerPayment({
                 customerId,
                 amount,
                 cashierId: activeCashier.id,
                 cashierName: activeCashier.name,
                 registerId: activeRegister.id,
               });
+              const targetCust = customers.find((c) => c.id === customerId);
+              if (mov && targetCust) {
+                setCompletedCustomerPayment({ customer: targetCust, movement: mov });
+              }
               loadData();
             }}
           />
@@ -417,12 +459,13 @@ export default function App() {
         {activeTab === 'history' && (
           <SalesHistoryView
             sales={sales}
+            registers={registers}
             onCancelSale={async (saleId) => {
               if (!activeCashier) return;
               await api.cancelSale(saleId, activeCashier.name);
               loadData();
             }}
-            onPrintReceipt={(sale) => setCompletedSaleReceipt(sale)}
+            onOpenReceiptModal={(sale) => setCompletedSaleReceipt(sale)}
           />
         )}
 
@@ -432,7 +475,9 @@ export default function App() {
             sales={sales}
             registers={registers}
             activeRegister={activeRegister}
+            movements={[]}
             onCloseShift={handleCloseShift}
+            onOpenReceiptModal={(shift) => setCompletedShiftReceipt(shift)}
           />
         )}
 
@@ -448,6 +493,10 @@ export default function App() {
               await api.saveRegister(reg);
               loadData();
             }}
+            onDeleteRegister={async (id) => {
+              await api.deleteRegister(id);
+              loadData();
+            }}
             onSaveCashier={async (c) => {
               await api.saveCashier(c);
               loadData();
@@ -456,16 +505,40 @@ export default function App() {
               await api.resetSeed();
               await loadData();
             }}
+            onOpenShiftRegister={(reg) => {
+              setActiveRegister(reg);
+              setShowOpenShiftModal(true);
+            }}
+            onCloseShiftRegister={(reg) => {
+              setActiveRegister(reg);
+              setActiveTab('cashcut');
+            }}
           />
         )}
       </main>
 
       {/* MODALS */}
+      {showPinModal && pendingCashierChange && (
+        <PINModal
+          cashier={pendingCashierChange}
+          onSuccess={() => {
+            setActiveCashier(pendingCashierChange);
+            setShowPinModal(false);
+            setPendingCashierChange(null);
+          }}
+          onClose={() => {
+            setShowPinModal(false);
+            setPendingCashierChange(null);
+          }}
+        />
+      )}
+
       {showOpenShiftModal && activeRegister && (
         <OpenShiftModal
-          registerName={activeRegister.name}
-          cashierName={activeCashier ? activeCashier.name : 'Cajero'}
-          onConfirm={handleOpenShift}
+          register={activeRegister}
+          cashier={activeCashier || cashiers[0]}
+          onConfirmOpenShift={handleOpenShift}
+          onCancel={() => setShowOpenShiftModal(false)}
         />
       )}
 
@@ -480,37 +553,82 @@ export default function App() {
         />
       )}
 
-      {showMovementsModal && activeRegister && activeCashier && activeShift && (
-        <CashMovementsModal
-          registerId={activeRegister.id}
-          shiftId={activeShift.id}
-          cashierId={activeCashier.id}
-          cashierName={activeCashier.name}
-          onClose={() => setShowMovementsModal(false)}
-          onSuccess={() => {
-            setShowMovementsModal(false);
-            loadData();
-          }}
-        />
+      {/* F3 Cash Movements Modal */}
+      {showMovementsModal && (
+        activeShift ? (
+          <CashMovementsModal
+            movements={[]}
+            activeRegisterName={activeRegister ? activeRegister.name : 'Caja 1'}
+            onAddMovement={async (movData) => {
+              if (!activeRegister || !activeCashier || !activeShift) return;
+              await api.addCashMovement({
+                registerId: activeRegister.id,
+                shiftId: activeShift.id,
+                cashierId: activeCashier.id,
+                cashierName: activeCashier.name,
+                type: movData.type,
+                amount: movData.amount,
+                concept: movData.concept,
+              });
+              setShowMovementsModal(false);
+              loadData();
+            }}
+            onClose={() => setShowMovementsModal(false)}
+          />
+        ) : (
+          <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border border-slate-200 select-none">
+              <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto font-bold text-xl">
+                !
+              </div>
+              <h3 className="font-extrabold text-base text-slate-800">[F3] Turno de Caja Requerido</h3>
+              <p className="text-xs text-slate-500">
+                Debes abrir un turno de caja antes de poder registrar Entradas o Salidas de dinero.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowMovementsModal(false)}
+                  className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    setShowMovementsModal(false);
+                    setShowOpenShiftModal(true);
+                  }}
+                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow"
+                >
+                  Abrir Turno
+                </button>
+              </div>
+            </div>
+          </div>
+        )
       )}
 
+      {/* F2 Common Products Modal */}
       {showCommonModal && (
         <CommonProductsModal
           commonProducts={commonProducts}
           onAddCommonItem={(name, price) => {
-            if (addCommonItemCb) addCommonItemCb(name, price);
+            setActiveTab('sales');
+            if (addCommonItemCb) {
+              addCommonItemCb(name, price);
+            }
             setShowCommonModal(false);
           }}
           onClose={() => setShowCommonModal(false)}
         />
       )}
 
-      {showHoldModal && activeRegister && (
+      {/* F6 Hold Tickets Modal */}
+      {showHoldModal && (
         <HoldTicketsModal
           holdTickets={holdTickets}
           currentCartItems={pendingHoldCart?.items || []}
           currentCustomer={pendingHoldCart?.customer}
-          activeRegisterName={activeRegister.name}
+          activeRegisterName={activeRegister ? activeRegister.name : 'Caja 1'}
           onClose={() => {
             setShowHoldModal(false);
             setPendingHoldCart(null);
@@ -519,7 +637,7 @@ export default function App() {
             if (!pendingHoldCart || pendingHoldCart.items.length === 0) return;
             await api.saveHoldTicket({
               label,
-              registerId: activeRegister.id,
+              registerId: activeRegister ? activeRegister.id : 'reg-1',
               items: pendingHoldCart.items,
               customerId: pendingHoldCart.customer?.id,
             });
@@ -545,6 +663,24 @@ export default function App() {
         <ThermalReceiptModal
           sale={completedSaleReceipt}
           onClose={() => setCompletedSaleReceipt(null)}
+        />
+      )}
+
+      {completedShiftReceipt && (
+        <CashCutReceiptModal
+          shift={completedShiftReceipt}
+          register={activeRegister}
+          onClose={() => setCompletedShiftReceipt(null)}
+        />
+      )}
+
+      {completedCustomerPayment && (
+        <CustomerPaymentReceiptModal
+          customer={completedCustomerPayment.customer}
+          movement={completedCustomerPayment.movement}
+          cashierName={activeCashier?.name}
+          registerName={activeRegister?.name}
+          onClose={() => setCompletedCustomerPayment(null)}
         />
       )}
 

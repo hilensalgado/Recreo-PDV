@@ -1,16 +1,3 @@
-import fs from 'fs';
-import path from 'path';
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import {
-  getFirestore,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  collection,
-  deleteDoc,
-} from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
 import {
   Product,
   Department,
@@ -24,18 +11,6 @@ import {
   HoldTicket,
   CommonProduct,
 } from '../src/types/pos';
-
-// Initialize Firebase App & Firestore
-const app = getApps().length > 0 ? getApp() : initializeApp({
-  apiKey: firebaseConfig.apiKey,
-  authDomain: firebaseConfig.authDomain,
-  projectId: firebaseConfig.projectId,
-  storageBucket: firebaseConfig.storageBucket,
-  messagingSenderId: firebaseConfig.messagingSenderId,
-  appId: firebaseConfig.appId,
-});
-
-const firestoreDb = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 interface DatabaseSchema {
   products: Product[];
@@ -93,6 +68,30 @@ const initialCashiers: Cashier[] = [
       allowReports: true,
       allowInventoryEdit: true,
       allowCashDrawOpen: true,
+      allowCashMovements: true,
+      allowCustomerPayments: true,
+      allowHoldTickets: true,
+      allowCommonProducts: true,
+      allowConfigEdit: true,
+    },
+  },
+  {
+    id: 'cash-2',
+    name: 'Cajero Mostrador',
+    pin: '0000',
+    role: 'CASHIER',
+    permissions: {
+      allowPriceChange: false,
+      allowDiscounts: true,
+      allowReturns: false,
+      allowReports: false,
+      allowInventoryEdit: false,
+      allowCashDrawOpen: true,
+      allowCashMovements: true,
+      allowCustomerPayments: true,
+      allowHoldTickets: true,
+      allowCommonProducts: true,
+      allowConfigEdit: false,
     },
   },
 ];
@@ -106,11 +105,86 @@ const initialCommonProducts: CommonProduct[] = [
   { id: 'cp-6', name: 'Envase Retornable Refresco', price: 20, category: 'Depósitos', iconName: 'Box' },
 ];
 
+const initialProducts: Product[] = [
+  {
+    id: 'prod-1',
+    barcode: '75010001',
+    name: 'Coca Cola 600ml Non-Returnable',
+    departmentId: 'dep-2',
+    departmentName: 'Bebidas y Vinos',
+    costPrice: 14,
+    salePrice: 20,
+    wholesalePrice: 18,
+    wholesaleMinQty: 6,
+    stock: 48,
+    minStock: 10,
+    unit: 'piece',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prod-2',
+    barcode: '75010002',
+    name: 'Sabritas Sal 45g',
+    departmentId: 'dep-4',
+    departmentName: 'Botanas y Dulcería',
+    costPrice: 12,
+    salePrice: 18,
+    wholesalePrice: 16,
+    wholesaleMinQty: 5,
+    stock: 30,
+    minStock: 8,
+    unit: 'piece',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prod-3',
+    barcode: '75010003',
+    name: 'Leche Entera 1L',
+    departmentId: 'dep-3',
+    departmentName: 'Lácteos y Embutidos',
+    costPrice: 20,
+    salePrice: 27,
+    wholesalePrice: 25,
+    wholesaleMinQty: 12,
+    stock: 24,
+    minStock: 6,
+    unit: 'piece',
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 'prod-4',
+    barcode: '75010004',
+    name: 'Jitomate Saladette (Kg)',
+    departmentId: 'dep-5',
+    departmentName: 'Frutas y Verduras (Kilo)',
+    costPrice: 18,
+    salePrice: 28,
+    wholesalePrice: 24,
+    wholesaleMinQty: 5,
+    stock: 15.5,
+    minStock: 5,
+    unit: 'kg',
+    updatedAt: new Date().toISOString(),
+  },
+];
+
+const initialCustomers: Customer[] = [
+  {
+    id: 'cust-1',
+    name: 'Juan Pérez (Cliente Frecuente)',
+    phone: '555-0192',
+    email: 'juan@example.com',
+    creditLimit: 2000,
+    creditBalance: 150,
+    createdAt: new Date().toISOString(),
+  },
+];
+
 class DatabaseManager {
   private data: DatabaseSchema = {
-    products: [],
+    products: initialProducts,
     departments: initialDepartments,
-    customers: [],
+    customers: initialCustomers,
     customerMovements: [],
     sales: [],
     registers: initialRegisters,
@@ -118,132 +192,28 @@ class DatabaseManager {
     cashMovements: [],
     cashiers: initialCashiers,
     holdTickets: [],
-    commonProducts: [],
+    commonProducts: initialCommonProducts,
     ticketCounter: 1001,
   };
 
-  constructor() {
-    this.init();
-  }
-
-  private async init() {
-    try {
-      console.log('Synchronizing with Firebase Firestore...');
-      // Load collections from Firestore
-      const [
-        prodsSnap,
-        depsSnap,
-        custsSnap,
-        custMovsSnap,
-        salesSnap,
-        regsSnap,
-        shiftsSnap,
-        cashMovsSnap,
-        cashiersSnap,
-        holdsSnap,
-        commonSnap,
-        metaSnap,
-      ] = await Promise.all([
-        getDocs(collection(firestoreDb, 'products')),
-        getDocs(collection(firestoreDb, 'departments')),
-        getDocs(collection(firestoreDb, 'customers')),
-        getDocs(collection(firestoreDb, 'customerMovements')),
-        getDocs(collection(firestoreDb, 'sales')),
-        getDocs(collection(firestoreDb, 'registers')),
-        getDocs(collection(firestoreDb, 'shifts')),
-        getDocs(collection(firestoreDb, 'cashMovements')),
-        getDocs(collection(firestoreDb, 'cashiers')),
-        getDocs(collection(firestoreDb, 'holdTickets')),
-        getDocs(collection(firestoreDb, 'commonProducts')),
-        getDoc(doc(firestoreDb, 'meta', 'counter')),
-      ]);
-
-      if (metaSnap.exists()) {
-        this.data.ticketCounter = metaSnap.data().ticketCounter || 1001;
-      }
-
-      if (!depsSnap.empty) {
-        this.data.departments = depsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Department));
-      } else {
-        // Seed default departments in Firestore
-        for (const dep of initialDepartments) {
-          await setDoc(doc(firestoreDb, 'departments', dep.id), dep);
-        }
-      }
-
-      if (!regsSnap.empty) {
-        this.data.registers = regsSnap.docs.map(d => ({ id: d.id, ...d.data() } as CashRegister));
-      } else {
-        // Seed default registers
-        for (const reg of initialRegisters) {
-          await setDoc(doc(firestoreDb, 'registers', reg.id), reg);
-        }
-      }
-
-      if (!cashiersSnap.empty) {
-        this.data.cashiers = cashiersSnap.docs.map(d => ({ id: d.id, ...d.data() } as Cashier));
-      } else {
-        // Seed default admin cashier
-        for (const c of initialCashiers) {
-          await setDoc(doc(firestoreDb, 'cashiers', c.id), c);
-        }
-      }
-
-      this.data.products = prodsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Product));
-      this.data.customers = custsSnap.docs.map(d => ({ id: d.id, ...d.data() } as Customer));
-      this.data.customerMovements = custMovsSnap.docs.map(d => ({ id: d.id, ...d.data() } as CustomerCreditMovement));
-      this.data.sales = salesSnap.docs.map(d => ({ id: d.id, ...d.data() } as Sale));
-      this.data.shifts = shiftsSnap.docs.map(d => ({ id: d.id, ...d.data() } as CashShift));
-      this.data.cashMovements = cashMovsSnap.docs.map(d => ({ id: d.id, ...d.data() } as CashMovement));
-      this.data.holdTickets = holdsSnap.docs.map(d => ({ id: d.id, ...d.data() } as HoldTicket));
-      if (!commonSnap.empty) {
-        this.data.commonProducts = commonSnap.docs.map(d => ({ id: d.id, ...d.data() } as CommonProduct));
-      } else {
-        for (const cp of initialCommonProducts) {
-          await setDoc(doc(firestoreDb, 'commonProducts', cp.id), cp);
-        }
-        this.data.commonProducts = initialCommonProducts;
-      }
-
-      console.log('Firebase Firestore synchronized successfully!');
-    } catch (err) {
-      console.error('Error initializing from Firebase Firestore:', err);
-    }
-  }
-
-  public async resetSeed() {
+  public resetSeed() {
     this.data = {
-      products: [],
-      departments: initialDepartments,
-      customers: [],
+      products: [...initialProducts],
+      departments: [...initialDepartments],
+      customers: [...initialCustomers],
       customerMovements: [],
       sales: [],
-      registers: initialRegisters,
+      registers: [...initialRegisters],
       shifts: [],
       cashMovements: [],
-      cashiers: initialCashiers,
+      cashiers: [...initialCashiers],
       holdTickets: [],
-      commonProducts: [],
+      commonProducts: [...initialCommonProducts],
       ticketCounter: 1001,
     };
-
-    try {
-      await setDoc(doc(firestoreDb, 'meta', 'counter'), { ticketCounter: 1001 });
-      for (const dep of initialDepartments) {
-        await setDoc(doc(firestoreDb, 'departments', dep.id), dep);
-      }
-      for (const reg of initialRegisters) {
-        await setDoc(doc(firestoreDb, 'registers', reg.id), reg);
-      }
-      for (const c of initialCashiers) {
-        await setDoc(doc(firestoreDb, 'cashiers', c.id), c);
-      }
-    } catch (err) {
-      console.error('Error resetting Firebase seed:', err);
-    }
   }
 
-  // API Methods
+  // API Getters
   public getProducts() { return this.data.products; }
   public getDepartments() { return this.data.departments; }
   public getCustomers() { return this.data.customers; }
@@ -285,15 +255,11 @@ class DatabaseManager {
       this.data.products.unshift(newProd);
     }
 
-    // Persist to Firestore asynchronously
-    setDoc(doc(firestoreDb, 'products', id), newProd).catch(console.error);
-
     return newProd;
   }
 
   public deleteProduct(id: string) {
     this.data.products = this.data.products.filter(p => p.id !== id);
-    deleteDoc(doc(firestoreDb, 'products', id)).catch(console.error);
   }
 
   public adjustStock(productId: string, quantityDelta: number, reason: string): Product | null {
@@ -301,8 +267,6 @@ class DatabaseManager {
     if (!prod) return null;
     prod.stock = Math.max(0, Number((prod.stock + quantityDelta).toFixed(3)));
     prod.updatedAt = new Date().toISOString();
-    
-    setDoc(doc(firestoreDb, 'products', productId), prod).catch(console.error);
     return prod;
   }
 
@@ -327,8 +291,11 @@ class DatabaseManager {
       this.data.registers.push(newReg);
     }
 
-    setDoc(doc(firestoreDb, 'registers', id), newReg).catch(console.error);
     return newReg;
+  }
+
+  public deleteRegister(id: string) {
+    this.data.registers = this.data.registers.filter(r => r.id !== id);
   }
 
   public openShift(registerId: string, cashierId: string, initialCash: number): CashShift {
@@ -360,9 +327,6 @@ class DatabaseManager {
     register.currentCashierName = cashier?.name;
     register.activeShiftId = newShift.id;
 
-    setDoc(doc(firestoreDb, 'shifts', id), newShift).catch(console.error);
-    setDoc(doc(firestoreDb, 'registers', register.id), register).catch(console.error);
-
     return newShift;
   }
 
@@ -380,10 +344,7 @@ class DatabaseManager {
     if (register && register.activeShiftId === shiftId) {
       register.isOpen = false;
       register.activeShiftId = undefined;
-      setDoc(doc(firestoreDb, 'registers', register.id), register).catch(console.error);
     }
-
-    setDoc(doc(firestoreDb, 'shifts', shiftId), shift).catch(console.error);
 
     return shift;
   }
@@ -417,10 +378,8 @@ class DatabaseManager {
         shift.totalExpenses += movement.amount;
         shift.expectedCash -= movement.amount;
       }
-      setDoc(doc(firestoreDb, 'shifts', shift.id), shift).catch(console.error);
     }
 
-    setDoc(doc(firestoreDb, 'cashMovements', id), newMovement).catch(console.error);
     return newMovement;
   }
 
@@ -458,7 +417,6 @@ class DatabaseManager {
       // Deduct Stock
       product.stock = Math.max(0, Number((product.stock - item.quantity).toFixed(3)));
       product.updatedAt = new Date().toISOString();
-      setDoc(doc(firestoreDb, 'products', product.id), product).catch(console.error);
 
       const itemUnitPrice = item.unitPrice || product.salePrice;
       const isWholesale = item.quantity >= product.wholesaleMinQty && product.wholesalePrice > 0;
@@ -484,7 +442,6 @@ class DatabaseManager {
 
     const total = subtotal - totalDiscount;
     const ticketNum = this.data.ticketCounter++;
-    setDoc(doc(firestoreDb, 'meta', 'counter'), { ticketCounter: this.data.ticketCounter }).catch(console.error);
 
     let changeGiven = 0;
     if (saleData.paymentMethod === 'EFECTIVO') {
@@ -518,7 +475,6 @@ class DatabaseManager {
     };
 
     this.data.sales.unshift(newSale);
-    setDoc(doc(firestoreDb, 'sales', id), newSale).catch(console.error);
 
     // Update Shift calculations
     if (shift && shift.status === 'OPEN') {
@@ -534,13 +490,11 @@ class DatabaseManager {
         shift.totalSalesCard += saleData.cardPaid;
         shift.expectedCash += Math.min(total, saleData.cashPaid);
       }
-      setDoc(doc(firestoreDb, 'shifts', shift.id), shift).catch(console.error);
     }
 
     // Update Customer Credit balance if paid by CREDIT
     if (saleData.paymentMethod === 'CREDITO' && customer) {
       customer.creditBalance += total;
-      setDoc(doc(firestoreDb, 'customers', customer.id), customer).catch(console.error);
 
       const cmovId = `cmov-${Date.now()}`;
       const cmov: CustomerCreditMovement = {
@@ -555,7 +509,6 @@ class DatabaseManager {
         saleId: newSale.id,
       };
       this.data.customerMovements.unshift(cmov);
-      setDoc(doc(firestoreDb, 'customerMovements', cmovId), cmov).catch(console.error);
     }
 
     return newSale;
@@ -567,7 +520,6 @@ class DatabaseManager {
     if (!sale || sale.status === 'CANCELLED') return null;
 
     sale.status = 'CANCELLED';
-    setDoc(doc(firestoreDb, 'sales', saleId), sale).catch(console.error);
 
     // Restore Product Stock
     for (const item of sale.items) {
@@ -575,7 +527,6 @@ class DatabaseManager {
       if (prod) {
         prod.stock = Number((prod.stock + item.quantity).toFixed(3));
         prod.updatedAt = new Date().toISOString();
-        setDoc(doc(firestoreDb, 'products', prod.id), prod).catch(console.error);
       }
     }
 
@@ -590,7 +541,6 @@ class DatabaseManager {
       } else if (sale.paymentMethod === 'CREDITO') {
         shift.totalSalesCredit -= sale.total;
       }
-      setDoc(doc(firestoreDb, 'shifts', shift.id), shift).catch(console.error);
     }
 
     // Adjust customer credit if applicable
@@ -598,7 +548,6 @@ class DatabaseManager {
       const cust = this.data.customers.find(c => c.id === sale.customerId);
       if (cust) {
         cust.creditBalance = Math.max(0, cust.creditBalance - sale.total);
-        setDoc(doc(firestoreDb, 'customers', cust.id), cust).catch(console.error);
 
         const cmovId = `cmov-${Date.now()}`;
         const cmov: CustomerCreditMovement = {
@@ -613,7 +562,6 @@ class DatabaseManager {
           saleId: sale.id,
         };
         this.data.customerMovements.unshift(cmov);
-        setDoc(doc(firestoreDb, 'customerMovements', cmovId), cmov).catch(console.error);
       }
     }
 
@@ -626,7 +574,6 @@ class DatabaseManager {
     if (!customer) return null;
 
     customer.creditBalance = Math.max(0, Number((customer.creditBalance - amount).toFixed(2)));
-    setDoc(doc(firestoreDb, 'customers', customer.id), customer).catch(console.error);
 
     const cmovId = `cmov-${Date.now()}`;
     const movement: CustomerCreditMovement = {
@@ -641,7 +588,6 @@ class DatabaseManager {
     };
 
     this.data.customerMovements.unshift(movement);
-    setDoc(doc(firestoreDb, 'customerMovements', cmovId), movement).catch(console.error);
 
     // Record cash in shift
     const register = this.data.registers.find(r => r.id === registerId);
@@ -650,7 +596,6 @@ class DatabaseManager {
       if (shift && shift.status === 'OPEN') {
         shift.totalIncomes += amount;
         shift.expectedCash += amount;
-        setDoc(doc(firestoreDb, 'shifts', shift.id), shift).catch(console.error);
       }
     }
 
@@ -679,8 +624,11 @@ class DatabaseManager {
       this.data.customers.unshift(newCust);
     }
 
-    setDoc(doc(firestoreDb, 'customers', id), newCust).catch(console.error);
     return newCust;
+  }
+
+  public deleteCustomer(id: string) {
+    this.data.customers = this.data.customers.filter(c => c.id !== id);
   }
 
   // Hold Tickets (Ventas en Espera)
@@ -696,13 +644,11 @@ class DatabaseManager {
       createdAt: new Date().toISOString(),
     };
     this.data.holdTickets.unshift(newTicket);
-    setDoc(doc(firestoreDb, 'holdTickets', id), newTicket).catch(console.error);
     return newTicket;
   }
 
   public deleteHoldTicket(id: string) {
     this.data.holdTickets = this.data.holdTickets.filter(t => t.id !== id);
-    deleteDoc(doc(firestoreDb, 'holdTickets', id)).catch(console.error);
   }
 
   // Cashier CRUD
@@ -721,6 +667,11 @@ class DatabaseManager {
         allowReports: false,
         allowInventoryEdit: false,
         allowCashDrawOpen: true,
+        allowCashMovements: true,
+        allowCustomerPayments: true,
+        allowHoldTickets: true,
+        allowCommonProducts: true,
+        allowConfigEdit: false,
       },
     };
 
@@ -730,7 +681,6 @@ class DatabaseManager {
       this.data.cashiers.push(newCashier);
     }
 
-    setDoc(doc(firestoreDb, 'cashiers', id), newCashier).catch(console.error);
     return newCashier;
   }
 

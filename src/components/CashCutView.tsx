@@ -19,6 +19,7 @@ interface CashCutViewProps {
   sales: Sale[];
   movements: CashMovement[];
   onCloseShift: (declaredCash: number, notes?: string) => void;
+  onOpenReceiptModal?: (shift: CashShift) => void;
 }
 
 export const CashCutView: React.FC<CashCutViewProps> = ({
@@ -28,6 +29,7 @@ export const CashCutView: React.FC<CashCutViewProps> = ({
   sales,
   movements,
   onCloseShift,
+  onOpenReceiptModal,
 }) => {
   // Cash Denomination Calculator
   const [b500, setB500] = useState(0);
@@ -108,12 +110,23 @@ export const CashCutView: React.FC<CashCutViewProps> = ({
           </div>
         </div>
 
-        <button
-          onClick={handleConfirmClose}
-          className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors flex items-center gap-2"
-        >
-          <Lock className="w-4 h-4" /> CERRAR TURNO Y CORTE Z
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenReceiptModal && (
+            <button
+              onClick={() => onOpenReceiptModal({ ...activeShift, declaredCash: calculatedPhysicalCash, difference, notes })}
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+              title="Vista previa del Ticket Z"
+            >
+              <Printer className="w-4 h-4 text-emerald-600" /> Prevista Ticket Z
+            </button>
+          )}
+          <button
+            onClick={handleConfirmClose}
+            className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-lg transition-colors flex items-center gap-2"
+          >
+            <Lock className="w-4 h-4" /> CERRAR TURNO Y CORTE Z
+          </button>
+        </div>
       </div>
 
       {/* Main Grid */}

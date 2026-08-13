@@ -13,6 +13,8 @@ import {
   X,
   AlertCircle,
   Receipt,
+  Edit,
+  Trash2,
 } from 'lucide-react';
 import { Customer, CustomerCreditMovement } from '../types/pos';
 
@@ -20,6 +22,7 @@ interface CustomersViewProps {
   customers: Customer[];
   movements: CustomerCreditMovement[];
   onSaveCustomer: (data: Partial<Customer> & { name: string }) => void;
+  onDeleteCustomer?: (id: string) => void;
   onAddPayment: (customerId: string, amount: number) => void;
 }
 
@@ -27,6 +30,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   customers = [],
   movements = [],
   onSaveCustomer,
+  onDeleteCustomer,
   onAddPayment,
 }) => {
   const [search, setSearch] = useState('');
@@ -34,8 +38,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
     (customers || [])[0]?.id || null
   );
 
-  // New Customer Modal State
+  // New / Edit Customer Modal State
   const [showNewModal, setShowNewModal] = useState(false);
+  const [editCustomerId, setEditCustomerId] = useState<string | null>(null);
   const [newName, setNewName] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
@@ -57,7 +62,42 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
       (c.address && c.address.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const handleCreateCustomer = (e: React.FormEvent) => {
+  const handleOpenAddCustomer = () => {
+    setEditCustomerId(null);
+    setNewName('');
+    setNewPhone('');
+    setNewEmail('');
+    setNewAddress('');
+    setNewLimit('2000');
+    setNewNotes('');
+    setShowNewModal(true);
+  };
+
+  const handleOpenEditCustomer = (c: Customer) => {
+    setEditCustomerId(c.id);
+    setNewName(c.name);
+    setNewPhone(c.phone || '');
+    setNewEmail(c.email || '');
+    setNewAddress(c.address || '');
+    setNewLimit((c.creditLimit || 2000).toString());
+    setNewNotes(c.notes || '');
+    setShowNewModal(true);
+  };
+
+  const handleDeleteCustomer = (c: Customer) => {
+    if (c.creditBalance > 0) {
+      alert(`No se puede eliminar el cliente "${c.name}" porque tiene un saldo deudor pendiente de $${c.creditBalance.toFixed(2)}. Liquida el saldo primero.`);
+      return;
+    }
+
+    if (confirm(`¿Seguro que deseas eliminar al cliente "${c.name}"?`)) {
+      if (onDeleteCustomer) {
+        onDeleteCustomer(c.id);
+      }
+    }
+  };
+
+  const handleSaveCustomerSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newName.trim()) {
       alert('Ingresa el nombre del cliente');
@@ -65,12 +105,12 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
     }
 
     onSaveCustomer({
+      id: editCustomerId || undefined,
       name: newName.trim(),
       phone: newPhone.trim(),
       email: newEmail.trim() || undefined,
       address: newAddress.trim() || undefined,
       creditLimit: parseFloat(newLimit) || 1000,
-      creditBalance: 0,
       notes: newNotes.trim() || undefined,
     });
 
@@ -116,67 +156,71 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         </div>
 
         <button
-          onClick={() => setShowNewModal(true)}
+          onClick={handleOpenAddCustomer}
           className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5"
         >
-          <Plus className="w-4 h-4" /> Registrar Nuevo Cliente
+          <Plus className="w-4 h-4" /> Nuevo Cliente
         </button>
       </div>
 
-      {/* Main Grid: Left List / Right Details */}
+      {/* Grid Display: Left List / Right Details */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Left List Column */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 space-y-3 flex flex-col h-[650px]">
+        {/* Left Customer List (1 Col) */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-3 space-y-3">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Buscar cliente por nombre o teléfono..."
+              placeholder="Buscar cliente por nombre o tel..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
           </div>
 
-          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 border rounded-lg">
+          <div className="space-y-1.5 max-h-[550px] overflow-y-auto pr-1">
             {filteredCustomers.length === 0 ? (
               <div className="p-6 text-center text-xs text-slate-400">
-                No se encontraron clientes.
+                No se encontraron clientes registrados.
               </div>
             ) : (
               filteredCustomers.map((c) => {
                 const isSelected = selectedCustomer?.id === c.id;
-                const creditUsedPercent = Math.min(100, (c.creditBalance / (c.creditLimit || 1)) * 100);
+                const creditUsedPercent = Math.min(
+                  100,
+                  (c.creditBalance / (c.creditLimit || 1)) * 100
+                );
 
                 return (
                   <button
                     key={c.id}
                     onClick={() => setSelectedCustomerId(c.id)}
-                    className={`w-full p-3 text-left transition-colors flex flex-col gap-1.5 ${
+                    className={`w-full text-left p-3 rounded-xl border transition-all ${
                       isSelected
-                        ? 'bg-indigo-50 border-l-4 border-indigo-600'
-                        : 'hover:bg-slate-50'
+                        ? 'bg-indigo-50/80 border-indigo-500 shadow-xs'
+                        : 'bg-white hover:bg-slate-50 border-slate-200'
                     }`}
                   >
                     <div className="flex justify-between items-start">
-                      <span className="font-bold text-slate-800 text-xs">{c.name}</span>
+                      <div className="font-bold text-xs text-slate-900">{c.name}</div>
                       <span
-                        className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
+                        className={`text-[10px] font-black px-1.5 py-0.2 rounded ${
                           c.creditBalance > 0
                             ? 'bg-rose-100 text-rose-700'
                             : 'bg-emerald-100 text-emerald-700'
                         }`}
                       >
-                        {c.creditBalance > 0 ? `Deuda $${c.creditBalance.toFixed(2)}` : 'Sin Deuda'}
+                        ${c.creditBalance.toFixed(2)}
                       </span>
                     </div>
 
-                    <div className="text-[11px] text-slate-400 flex items-center gap-2">
-                      <span>{c.phone}</span>
+                    <div className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-slate-400" />
+                      <span>{c.phone || 'Sin teléfono'}</span>
                     </div>
 
-                    {/* Progress Bar */}
-                    <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
+                    {/* Progress Bar of Credit Limit */}
+                    <div className="mt-2 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                       <div
                         className={`h-full ${
                           creditUsedPercent > 90 ? 'bg-rose-500' : 'bg-indigo-600'
@@ -201,23 +245,46 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <h3 className="font-extrabold text-lg text-slate-900">{selectedCustomer.name}</h3>
                   <div className="flex items-center gap-4 text-xs text-slate-500 mt-1">
                     <span className="flex items-center gap-1">
-                      <Phone className="w-3.5 h-3.5" /> {selectedCustomer.phone}
+                      <Phone className="w-3.5 h-3.5" /> {selectedCustomer.phone || 'Sin teléfono'}
                     </span>
                     {selectedCustomer.email && (
                       <span className="flex items-center gap-1">
                         <Mail className="w-3.5 h-3.5" /> {selectedCustomer.email}
                       </span>
                     )}
+                    {selectedCustomer.address && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" /> {selectedCustomer.address}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setShowPaymentModal(true)}
-                  disabled={selectedCustomer.creditBalance <= 0}
-                  className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-extrabold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5"
-                >
-                  <DollarSign className="w-4 h-4" /> ABONAR A CRÉDITO
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleOpenEditCustomer(selectedCustomer)}
+                    className="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1"
+                    title="Editar datos del cliente"
+                  >
+                    <Edit className="w-3.5 h-3.5 text-indigo-600" /> Editar
+                  </button>
+
+                  <button
+                    onClick={() => handleDeleteCustomer(selectedCustomer)}
+                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors border border-slate-200"
+                    title="Eliminar cliente"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    disabled={selectedCustomer.creditBalance <= 0}
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 text-white font-extrabold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5"
+                  >
+                    <DollarSign className="w-4 h-4" /> ABONAR A CRÉDITO
+                  </button>
+                </div>
               </div>
 
               {/* Credit Status Cards */}
@@ -259,23 +326,36 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
             {/* Customer Movements History */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3">
-              <div className="flex items-center gap-2 font-extrabold text-sm text-slate-800 border-b border-slate-100 pb-2">
-                <History className="w-4 h-4 text-indigo-600" />
-                <span>Estado de Cuenta e Historial de Movimientos</span>
+              <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+                <span className="font-bold text-slate-800 text-xs flex items-center gap-1.5">
+                  <History className="w-4 h-4 text-indigo-600" /> Historial de Cargos y Abonos
+                </span>
+                <span className="text-xs text-slate-400">{customerHistory.length} movimientos</span>
               </div>
 
-              <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 border rounded-lg">
+              <div className="max-h-72 overflow-y-auto divide-y divide-slate-100 text-xs">
                 {customerHistory.length === 0 ? (
-                  <div className="p-6 text-center text-xs text-slate-400">
-                    Sin cargos ni abonos registrados para este cliente.
+                  <div className="p-6 text-center text-slate-400">
+                    Este cliente no registra compras a crédito ni abonos recientes.
                   </div>
                 ) : (
                   customerHistory.map((m) => (
-                    <div key={m.id} className="p-3 flex items-center justify-between text-xs hover:bg-slate-50">
+                    <div key={m.id} className="py-2.5 px-2 flex justify-between items-center hover:bg-slate-50">
                       <div>
-                        <div className="font-bold text-slate-800">{m.description}</div>
-                        <div className="text-[10px] text-slate-400">
-                          {new Date(m.date).toLocaleString('es-MX')} por {m.cashierId}
+                        <div className="font-bold text-slate-800 flex items-center gap-2">
+                          <span>{m.description}</span>
+                          <span
+                            className={`text-[9px] px-1.5 py-0.2 rounded font-extrabold ${
+                              m.type === 'CHARGE'
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'bg-emerald-100 text-emerald-700'
+                            }`}
+                          >
+                            {m.type === 'CHARGE' ? 'CARGO (+) ' : 'ABONO (-) '}
+                          </span>
+                        </div>
+                        <div className="text-[10px] text-slate-400 mt-0.5">
+                          {new Date(m.date).toLocaleString('es-MX')}
                         </div>
                       </div>
 
@@ -293,36 +373,38 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             </div>
           </div>
         ) : (
-          <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-8 flex items-center justify-center text-slate-400 text-sm font-semibold">
-            Selecciona un cliente para ver su estado de cuenta.
+          <div className="md:col-span-2 bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400">
+            Selecciona un cliente de la lista para ver su estado de cuenta.
           </div>
         )}
       </div>
 
-      {/* MODAL 1: New Customer Modal */}
+      {/* MODAL 1: New / Edit Customer Modal */}
       {showNewModal && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-indigo-600">
                 <Users className="w-6 h-6" />
-                <h3 className="font-extrabold text-lg text-slate-900">Registrar Nuevo Cliente</h3>
+                <h3 className="font-extrabold text-lg text-slate-900">
+                  {editCustomerId ? 'Editar Datos del Cliente' : 'Registrar Nuevo Cliente'}
+                </h3>
               </div>
               <button onClick={() => setShowNewModal(false)} className="text-slate-400 hover:text-slate-600">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCustomer} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveCustomerSubmit} className="space-y-3 text-xs">
               <div>
                 <label className="font-bold text-slate-700 block mb-1">Nombre Completo *:</label>
                 <input
                   type="text"
                   required
-                  placeholder="ej. Doña Rosa / Don Carlos"
+                  placeholder="ej. Juan Pérez G."
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800"
                 />
               </div>
 
@@ -331,7 +413,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <label className="font-bold text-slate-700 block mb-1">Teléfono:</label>
                   <input
                     type="text"
-                    placeholder="555-000-0000"
+                    placeholder="ej. 555-0192"
                     value={newPhone}
                     onChange={(e) => setNewPhone(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-semibold text-slate-800"
@@ -342,33 +424,45 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <label className="font-bold text-slate-700 block mb-1">Límite Crédito ($):</label>
                   <input
                     type="number"
-                    step="500"
+                    step="100"
+                    placeholder="2000"
                     value={newLimit}
                     onChange={(e) => setNewLimit(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-bold text-slate-800"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-black text-slate-800"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Dirección:</label>
+                <label className="font-bold text-slate-700 block mb-1">Correo Electrónico:</label>
                 <input
-                  type="text"
-                  placeholder="Calle, Número, Colonia"
-                  value={newAddress}
-                  onChange={(e) => setNewAddress(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-semibold text-slate-800"
+                  type="email"
+                  placeholder="ej. cliente@email.com"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-800"
                 />
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Notas / Referencias:</label>
+                <label className="font-bold text-slate-700 block mb-1">Dirección / Domicilio:</label>
+                <input
+                  type="text"
+                  placeholder="ej. Av. Hidalgo #120, Col. Centro"
+                  value={newAddress}
+                  onChange={(e) => setNewAddress(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-800"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Notas / Observaciones:</label>
                 <textarea
                   rows={2}
-                  placeholder="ej. Paga los días 15 y 30 de cada mes"
+                  placeholder="ej. Preferencia de pago quincenal"
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
-                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg font-medium text-slate-800"
+                  className="w-full p-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800"
                 />
               </div>
 
@@ -382,9 +476,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow"
+                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl shadow"
                 >
-                  Guardar Cliente
+                  {editCustomerId ? 'Guardar Cambios' : 'Registrar Cliente'}
                 </button>
               </div>
             </form>
@@ -392,14 +486,14 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         </div>
       )}
 
-      {/* MODAL 2: Add Credit Payment */}
+      {/* MODAL 2: Payment Modal */}
       {showPaymentModal && selectedCustomer && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2 text-emerald-600">
                 <DollarSign className="w-6 h-6" />
-                <h3 className="font-extrabold text-lg text-slate-900">Abono a Deuda de Cliente</h3>
+                <h3 className="font-extrabold text-lg text-slate-900">Registrar Abono a Crédito</h3>
               </div>
               <button
                 onClick={() => setShowPaymentModal(false)}
@@ -409,24 +503,34 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleConfirmPayment} className="space-y-3 text-xs">
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200">
-                <div className="font-bold text-slate-800 text-sm">{selectedCustomer.name}</div>
-                <div className="text-rose-600 font-bold mt-1">
-                  Saldo Deudor Actual: ${selectedCustomer.creditBalance.toFixed(2)}
-                </div>
+            <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-1">
+              <div className="flex justify-between text-slate-600">
+                <span>Cliente:</span>
+                <span className="font-bold text-slate-900">{selectedCustomer.name}</span>
               </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Saldo Deudor Actual:</span>
+                <span className="font-black text-rose-600">
+                  ${selectedCustomer.creditBalance.toFixed(2)}
+                </span>
+              </div>
+            </div>
 
+            <form onSubmit={handleConfirmPayment} className="space-y-4 text-xs">
               <div>
-                <label className="font-bold text-slate-700 block mb-1">Monto del Abono en Efectivo ($):</label>
+                <label className="font-bold text-slate-700 block mb-1">
+                  Monto del Abono en Efectivo ($) *:
+                </label>
                 <input
                   type="number"
-                  step="0.5"
+                  step="1"
                   autoFocus
+                  required
+                  max={selectedCustomer.creditBalance}
                   placeholder="0.00"
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
-                  className="w-full p-3 bg-white border-2 border-emerald-500 rounded-xl text-2xl font-black text-slate-900 focus:outline-none"
+                  className="w-full p-3 bg-white border-2 border-emerald-500 rounded-xl text-xl font-black text-slate-900"
                 />
               </div>
 
@@ -442,7 +546,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   type="submit"
                   className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold rounded-xl shadow"
                 >
-                  Registrar Abono
+                  Confirmar Abono
                 </button>
               </div>
             </form>

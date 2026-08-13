@@ -14,6 +14,7 @@ import {
   Filter,
 } from 'lucide-react';
 import { Product, Department } from '../types/pos';
+import { exportInventoryCSV } from '../utils/exportUtils';
 
 interface InventoryViewProps {
   products: Product[];
@@ -155,6 +156,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => exportInventoryCSV(filteredProducts)}
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+            title="Exportar inventario a Excel/CSV"
+          >
+            <Download className="w-4 h-4 text-emerald-600" /> Exportar Excel
+          </button>
           <button
             onClick={handleOpenAdd}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5"

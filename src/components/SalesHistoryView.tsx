@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Receipt, Search, Printer, RotateCcw, Calendar, Filter, X } from 'lucide-react';
+import { Receipt, Search, Printer, RotateCcw, Calendar, Filter, X, Download } from 'lucide-react';
 import { Sale, CashRegister } from '../types/pos';
+import { exportSalesCSV } from '../utils/exportUtils';
 
 interface SalesHistoryViewProps {
   sales: Sale[];
@@ -48,6 +49,14 @@ export const SalesHistoryView: React.FC<SalesHistoryViewProps> = ({
             </p>
           </div>
         </div>
+
+        <button
+          onClick={() => exportSalesCSV(filteredSales)}
+          className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+          title="Exportar reporte de ventas a Excel/CSV"
+        >
+          <Download className="w-4 h-4 text-teal-600" /> Exportar Ventas CSV
+        </button>
       </div>
 
       {/* Filters Bar */}

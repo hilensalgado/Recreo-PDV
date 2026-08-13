@@ -135,6 +135,11 @@ export interface CashierPermissions {
   allowReports: boolean;
   allowInventoryEdit: boolean;
   allowCashDrawOpen: boolean;
+  allowCashMovements: boolean;
+  allowCustomerPayments: boolean;
+  allowHoldTickets: boolean;
+  allowCommonProducts: boolean;
+  allowConfigEdit: boolean;
 }
 
 export interface Cashier {
