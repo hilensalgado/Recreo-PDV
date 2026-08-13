@@ -415,6 +415,10 @@ export default function App() {
               await api.saveProduct(prod);
               loadData();
             }}
+            onImportProducts={async (items) => {
+              await api.importProducts(items);
+              await loadData();
+            }}
             onDeleteProduct={async (id) => {
               await api.deleteProduct(id);
               loadData();

@@ -15,11 +15,14 @@ import {
 } from 'lucide-react';
 import { Product, Department } from '../types/pos';
 import { exportInventoryCSV } from '../utils/exportUtils';
+import { ImportProductsModal } from './ImportProductsModal';
+import { FileSpreadsheet } from 'lucide-react';
 
 interface InventoryViewProps {
   products: Product[];
   departments: Department[];
   onSaveProduct: (prod: Partial<Product> & { barcode: string; name: string }) => void;
+  onImportProducts?: (items: any[]) => Promise<any>;
   onDeleteProduct: (id: string) => void;
   onAdjustStock: (productId: string, delta: number, reason: string) => void;
 }
@@ -28,12 +31,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   products = [],
   departments = [],
   onSaveProduct,
+  onImportProducts,
   onDeleteProduct,
   onAdjustStock,
 }) => {
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
   const [onlyLowStock, setOnlyLowStock] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Modal Product State
   const [showProdModal, setShowProdModal] = useState(false);
@@ -158,14 +163,21 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => exportInventoryCSV(filteredProducts)}
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer"
             title="Exportar inventario a Excel/CSV"
           >
-            <Download className="w-4 h-4 text-emerald-600" /> Exportar Excel
+            <Download className="w-4 h-4 text-slate-600" /> Exportar Excel
+          </button>
+          <button
+            onClick={() => setShowImportModal(true)}
+            className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs rounded-xl border border-emerald-300 transition-colors flex items-center gap-1.5 cursor-pointer"
+            title="Importar productos masivamente desde Excel/CSV"
+          >
+            <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Importar Excel
           </button>
           <button
             onClick={handleOpenAdd}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow transition-colors flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Nuevo Producto
           </button>
@@ -544,6 +556,18 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* MODAL 3: Import Excel / CSV Modal */}
+      {showImportModal && (
+        <ImportProductsModal
+          onImportSuccess={async (items) => {
+            if (onImportProducts) {
+              await onImportProducts(items);
+            }
+          }}
+          onClose={() => setShowImportModal(false)}
+        />
       )}
     </div>
   );

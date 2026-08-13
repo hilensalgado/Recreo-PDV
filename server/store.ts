@@ -288,6 +288,66 @@ class DatabaseManager {
     return newProd;
   }
 
+  public importProductsBatch(items: any[]): { count: number; updated: number; created: number } {
+    let created = 0;
+    let updated = 0;
+
+    for (const item of items) {
+      const barcode = String(item.barcode || item.Codigo || item.Código || item.codigo || '').trim();
+      const name = String(item.name || item.Descripcion || item.Descripción || item.descripcion || item.Nombre || '').trim();
+      if (!name) continue;
+
+      const costPrice = Number(item.costPrice ?? item['Precio Costo'] ?? item.costo ?? item.Costo) || 0;
+      const salePrice = Number(item.salePrice ?? item['Precio Venta'] ?? item.venta ?? item.Venta) || 0;
+      const wholesalePrice = Number(item.wholesalePrice ?? item['Precio Mayoreo'] ?? item.mayoreo ?? item.Mayoreo) || salePrice;
+      const stock = Number(item.stock ?? item.Inventario ?? item.inventario ?? item.Stock) || 0;
+      const minStock = Number(item.minStock ?? item['Inv. Minimo'] ?? item['Inv. Mínimo'] ?? item['Inv Minimo'] ?? item.minimo) || 5;
+      const departmentName = String(item.departmentName || item.Departamento || item.departamento || 'Abarrotes').trim();
+
+      // Find or create department
+      let dept = this.data.departments.find(d => d.name.toLowerCase() === departmentName.toLowerCase());
+      if (!dept && departmentName) {
+        dept = {
+          id: `dep-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          name: departmentName,
+          color: 'bg-blue-600',
+        };
+        this.data.departments.push(dept);
+      }
+
+      // Check if product exists by barcode or name
+      const existingIndex = barcode
+        ? this.data.products.findIndex(p => p.barcode === barcode)
+        : this.data.products.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+
+      const productData: Product = {
+        id: existingIndex >= 0 ? this.data.products[existingIndex].id : `prod-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        barcode: barcode || `779${Math.floor(10000000 + Math.random() * 90000000)}`,
+        name,
+        departmentId: dept?.id || 'dep-1',
+        departmentName: dept?.name || 'Abarrotes',
+        costPrice,
+        salePrice,
+        wholesalePrice,
+        wholesaleMinQty: existingIndex >= 0 ? this.data.products[existingIndex].wholesaleMinQty : 6,
+        stock,
+        minStock,
+        unit: 'piece',
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (existingIndex >= 0) {
+        this.data.products[existingIndex] = { ...this.data.products[existingIndex], ...productData };
+        updated++;
+      } else {
+        this.data.products.unshift(productData);
+        created++;
+      }
+    }
+
+    return { count: created + updated, created, updated };
+  }
+
   public deleteProduct(id: string) {
     this.data.products = this.data.products.filter(p => p.id !== id);
   }

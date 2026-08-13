@@ -33,6 +33,19 @@ async function startServer() {
     }
   });
 
+  app.post('/api/products/import', (req, res) => {
+    try {
+      const items = req.body.items || req.body;
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: 'Se requiere un arreglo de productos' });
+      }
+      const result = db.importProductsBatch(items);
+      res.json(result);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   app.delete('/api/products/:id', (req, res) => {
     try {
       db.deleteProduct(req.params.id);

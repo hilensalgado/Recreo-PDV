@@ -34,6 +34,11 @@ export const api = {
   getProducts: () => fetchJson<Product[]>('/api/products'),
   saveProduct: (prod: Partial<Product> & { barcode: string; name: string }) =>
     fetchJson<Product>('/api/products', { method: 'POST', body: JSON.stringify(prod) }),
+  importProducts: (items: any[]) =>
+    fetchJson<{ count: number; created: number; updated: number }>('/api/products/import', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    }),
   deleteProduct: (id: string) =>
     fetchJson<{ success: boolean }>(`/api/products/${id}`, { method: 'DELETE' }),
   adjustStock: (productId: string, delta: number, reason: string) =>
