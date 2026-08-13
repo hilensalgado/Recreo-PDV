@@ -561,10 +561,10 @@ export const SalesView: React.FC<SalesViewProps> = ({
             {/* Giant Total Display High Density */}
             <div className="bg-slate-950 p-3.5 rounded-sm border border-slate-800 my-3 text-right shadow-inner">
               <span className="text-4xl xl:text-5xl font-mono font-bold text-[#4ade80] tracking-tight block">
-                ${totalSum.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${totalSum.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
               <span className="text-[10px] text-slate-400 mt-1 block uppercase font-mono">
-                PESOS MEXICANOS (MXN)
+                PESOS ARGENTINOS (ARS)
               </span>
             </div>
 
