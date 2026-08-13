@@ -266,6 +266,24 @@ async function startServer() {
     }
   });
 
+  app.post('/api/common-products', (req, res) => {
+    try {
+      const cp = db.saveCommonProduct(req.body);
+      res.json(cp);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.delete('/api/common-products/:id', (req, res) => {
+    try {
+      db.deleteCommonProduct(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // Summary Stats
   app.get('/api/stats/summary', (req, res) => {
     try {

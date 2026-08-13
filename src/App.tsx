@@ -611,12 +611,21 @@ export default function App() {
       {showCommonModal && (
         <CommonProductsModal
           commonProducts={commonProducts}
+          isAdmin={activeCashier?.role === 'ADMIN'}
           onAddCommonItem={(name, price) => {
             setActiveTab('sales');
             if (addCommonItemCb) {
               addCommonItemCb(name, price);
             }
             setShowCommonModal(false);
+          }}
+          onSaveCommonProduct={async (cp) => {
+            await api.saveCommonProduct(cp);
+            loadData();
+          }}
+          onDeleteCommonProduct={async (id) => {
+            await api.deleteCommonProduct(id);
+            loadData();
           }}
           onClose={() => setShowCommonModal(false)}
         />

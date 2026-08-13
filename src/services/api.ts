@@ -125,6 +125,10 @@ export const api = {
 
   // Common Products
   getCommonProducts: () => fetchJson<CommonProduct[]>('/api/common-products'),
+  saveCommonProduct: (data: Partial<CommonProduct> & { name: string; price: number }) =>
+    fetchJson<CommonProduct>('/api/common-products', { method: 'POST', body: JSON.stringify(data) }),
+  deleteCommonProduct: (id: string) =>
+    fetchJson<{ success: boolean }>(`/api/common-products/${id}`, { method: 'DELETE' }),
 
   // Summary Stats
   getSummaryStats: () => fetchJson<PosSummaryStats>('/api/stats/summary'),

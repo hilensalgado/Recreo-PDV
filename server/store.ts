@@ -684,6 +684,31 @@ class DatabaseManager {
     return newCashier;
   }
 
+  // Common Products CRUD
+  public saveCommonProduct(cp: Partial<CommonProduct> & { name: string; price: number }): CommonProduct {
+    const existingIndex = this.data.commonProducts.findIndex(item => item.id === cp.id);
+    const id = cp.id || `cp-${Date.now()}`;
+    const newCp: CommonProduct = {
+      id,
+      name: cp.name,
+      price: cp.price,
+      category: cp.category || 'General',
+      iconName: cp.iconName || 'Grid',
+    };
+
+    if (existingIndex >= 0) {
+      this.data.commonProducts[existingIndex] = { ...this.data.commonProducts[existingIndex], ...newCp };
+    } else {
+      this.data.commonProducts.push(newCp);
+    }
+
+    return newCp;
+  }
+
+  public deleteCommonProduct(id: string) {
+    this.data.commonProducts = this.data.commonProducts.filter(item => item.id !== id);
+  }
+
   // Summary Stats
   public getSummaryStats() {
     const todayStr = new Date().toISOString().split('T')[0];
