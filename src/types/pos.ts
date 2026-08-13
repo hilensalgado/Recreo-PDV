@@ -92,6 +92,7 @@ export interface CashRegister {
   currentCashierId?: string;
   currentCashierName?: string;
   activeShiftId?: string;
+  activeDeviceId?: string;
 }
 
 export interface CashShift {
@@ -148,6 +149,9 @@ export interface Cashier {
   pin: string;
   role: 'ADMIN' | 'CASHIER';
   permissions: CashierPermissions;
+  activeDeviceId?: string;
+  activeRegisterId?: string;
+  isLoggedIn?: boolean;
 }
 
 export interface HoldTicket {

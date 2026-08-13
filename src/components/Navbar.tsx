@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           : 'bg-slate-700 text-slate-400'
                       }`}
                     >
-                      {reg.isOpen ? 'Abierta' : 'Cerrada'}
+                      {reg.isOpen ? (reg.currentCashierName ? `Abierta (${reg.currentCashierName})` : 'Abierta') : 'Cerrada'}
                     </span>
                   </button>
                 ))}
@@ -151,7 +151,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             {showCashierDropdown && (
-              <div className="absolute right-0 mt-1 w-52 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 text-xs">
+              <div className="absolute right-0 mt-1 w-60 bg-slate-800 border border-slate-700 rounded shadow-xl py-1 z-50 text-xs">
                 <div className="px-3 py-1.5 border-b border-slate-700 font-semibold text-slate-400 text-[10px] uppercase tracking-wider">
                   Cambiar Cajero
                 </div>
@@ -167,9 +167,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }`}
                   >
                     <span>{c.name}</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold bg-slate-700 text-slate-300">
-                      {c.role}
-                    </span>
+                    <div className="flex items-center gap-1">
+                      {c.isLoggedIn && c.id !== activeCashier?.id && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                          🔒 En otro equipo
+                        </span>
+                      )}
+                      <span className="text-[9px] px-1.5 py-0.5 rounded font-extrabold bg-slate-700 text-slate-300">
+                        {c.role}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>

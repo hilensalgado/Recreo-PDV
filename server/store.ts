@@ -416,10 +416,62 @@ class DatabaseManager {
     this.data.registers = this.data.registers.filter(r => r.id !== id);
   }
 
-  public openShift(registerId: string, cashierId: string, initialCash: number): CashShift {
+  // Concurrency Session Lock Handlers
+  public verifyAndClaimCashier(cashierId: string, deviceId: string, registerId?: string): Cashier {
+    const cashier = this.data.cashiers.find(c => c.id === cashierId);
+    if (!cashier) throw new Error('Usuario no encontrado');
+
+    if (cashier.isLoggedIn && cashier.activeDeviceId && cashier.activeDeviceId !== deviceId) {
+      throw new Error(`El usuario "${cashier.name}" ya tiene una sesión activa en otro equipo/dispositivo. Cierre sesión en el otro equipo para ingresar.`);
+    }
+
+    cashier.isLoggedIn = true;
+    cashier.activeDeviceId = deviceId;
+    if (registerId) cashier.activeRegisterId = registerId;
+    return cashier;
+  }
+
+  public releaseCashierSession(cashierId: string, deviceId: string) {
+    const cashier = this.data.cashiers.find(c => c.id === cashierId);
+    if (cashier && cashier.activeDeviceId === deviceId) {
+      cashier.isLoggedIn = false;
+      cashier.activeDeviceId = undefined;
+      cashier.activeRegisterId = undefined;
+    }
+  }
+
+  public verifyAndClaimRegister(registerId: string, deviceId: string, cashierId?: string): CashRegister {
+    const register = this.data.registers.find(r => r.id === registerId);
+    if (!register) throw new Error('Caja no encontrada');
+
+    if (register.isOpen && register.activeDeviceId && register.activeDeviceId !== deviceId) {
+      throw new Error(`La caja "${register.name}" está en uso por ${register.currentCashierName || 'otro usuario'} en otro equipo/dispositivo.`);
+    }
+
+    register.activeDeviceId = deviceId;
+    if (cashierId) register.currentCashierId = cashierId;
+    return register;
+  }
+
+  public releaseRegisterSession(registerId: string, deviceId: string) {
+    const register = this.data.registers.find(r => r.id === registerId);
+    if (register && register.activeDeviceId === deviceId) {
+      register.activeDeviceId = undefined;
+    }
+  }
+
+  public openShift(registerId: string, cashierId: string, initialCash: number, deviceId?: string): CashShift {
     const register = this.data.registers.find(r => r.id === registerId);
     const cashier = this.data.cashiers.find(c => c.id === cashierId);
-    if (!register) throw new Error('Register not found');
+    if (!register) throw new Error('Caja no encontrada');
+
+    if (register.isOpen && register.activeDeviceId && deviceId && register.activeDeviceId !== deviceId) {
+      throw new Error(`La caja "${register.name}" ya está abierta en otro equipo por ${register.currentCashierName || 'otro usuario'}.`);
+    }
+
+    if (cashier && cashier.isLoggedIn && cashier.activeDeviceId && deviceId && cashier.activeDeviceId !== deviceId) {
+      throw new Error(`El usuario "${cashier.name}" ya está activo en otro equipo.`);
+    }
 
     const id = `shift-${Date.now()}`;
     const newShift: CashShift = {
@@ -444,13 +496,22 @@ class DatabaseManager {
     register.currentCashierId = cashier?.id;
     register.currentCashierName = cashier?.name;
     register.activeShiftId = newShift.id;
+    if (deviceId) {
+      register.activeDeviceId = deviceId;
+    }
+
+    if (cashier) {
+      cashier.isLoggedIn = true;
+      if (deviceId) cashier.activeDeviceId = deviceId;
+      cashier.activeRegisterId = register.id;
+    }
 
     return newShift;
   }
 
-  public closeShift(shiftId: string, declaredCash: number, notes?: string): CashShift {
+  public closeShift(shiftId: string, declaredCash: number, notes?: string, deviceId?: string): CashShift {
     const shift = this.data.shifts.find(s => s.id === shiftId);
-    if (!shift) throw new Error('Shift not found');
+    if (!shift) throw new Error('Turno no encontrado');
 
     shift.closedAt = new Date().toISOString();
     shift.declaredCash = Number(declaredCash);
@@ -462,6 +523,16 @@ class DatabaseManager {
     if (register && register.activeShiftId === shiftId) {
       register.isOpen = false;
       register.activeShiftId = undefined;
+      register.activeDeviceId = undefined;
+      register.currentCashierId = undefined;
+      register.currentCashierName = undefined;
+    }
+
+    const cashier = this.data.cashiers.find(c => c.id === shift.cashierId);
+    if (cashier && (deviceId ? cashier.activeDeviceId === deviceId : true)) {
+      cashier.isLoggedIn = false;
+      cashier.activeDeviceId = undefined;
+      cashier.activeRegisterId = undefined;
     }
 
     return shift;

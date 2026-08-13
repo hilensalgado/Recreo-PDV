@@ -104,7 +104,7 @@ async function startServer() {
     }
   });
 
-  // Shifts
+  // Shifts & Device Concurrency Sessions
   app.get('/api/shifts', (req, res) => {
     try {
       res.json(db.getShifts());
@@ -115,8 +115,8 @@ async function startServer() {
 
   app.post('/api/shifts/open', (req, res) => {
     try {
-      const { registerId, cashierId, initialCash } = req.body;
-      const shift = db.openShift(registerId, cashierId, initialCash);
+      const { registerId, cashierId, initialCash, deviceId } = req.body;
+      const shift = db.openShift(registerId, cashierId, initialCash, deviceId);
       res.json(shift);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
@@ -125,11 +125,52 @@ async function startServer() {
 
   app.post('/api/shifts/close', (req, res) => {
     try {
-      const { shiftId, declaredCash, notes } = req.body;
-      const shift = db.closeShift(shiftId, declaredCash, notes);
+      const { shiftId, declaredCash, notes, deviceId } = req.body;
+      const shift = db.closeShift(shiftId, declaredCash, notes, deviceId);
       res.json(shift);
     } catch (err: any) {
       res.status(400).json({ error: err.message });
+    }
+  });
+
+  // Concurrency Lock Endpoints
+  app.post('/api/sessions/cashier/claim', (req, res) => {
+    try {
+      const { cashierId, deviceId, registerId } = req.body;
+      const cashier = db.verifyAndClaimCashier(cashierId, deviceId, registerId);
+      res.json(cashier);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/sessions/cashier/release', (req, res) => {
+    try {
+      const { cashierId, deviceId } = req.body;
+      db.releaseCashierSession(cashierId, deviceId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/sessions/register/claim', (req, res) => {
+    try {
+      const { registerId, deviceId, cashierId } = req.body;
+      const register = db.verifyAndClaimRegister(registerId, deviceId, cashierId);
+      res.json(register);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/sessions/register/release', (req, res) => {
+    try {
+      const { registerId, deviceId } = req.body;
+      db.releaseRegisterSession(registerId, deviceId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   });
 

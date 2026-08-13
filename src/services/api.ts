@@ -58,17 +58,38 @@ export const api = {
   deleteRegister: (id: string) =>
     fetchJson<{ success: boolean }>(`/api/registers/${id}`, { method: 'DELETE' }),
 
-  // Shifts
+  // Shifts & Concurrency
   getShifts: () => fetchJson<CashShift[]>('/api/shifts'),
-  openShift: (registerId: string, cashierId: string, initialCash: number) =>
+  openShift: (registerId: string, cashierId: string, initialCash: number, deviceId?: string) =>
     fetchJson<CashShift>('/api/shifts/open', {
       method: 'POST',
-      body: JSON.stringify({ registerId, cashierId, initialCash }),
+      body: JSON.stringify({ registerId, cashierId, initialCash, deviceId }),
     }),
-  closeShift: (shiftId: string, declaredCash: number, notes?: string) =>
+  closeShift: (shiftId: string, declaredCash: number, notes?: string, deviceId?: string) =>
     fetchJson<CashShift>('/api/shifts/close', {
       method: 'POST',
-      body: JSON.stringify({ shiftId, declaredCash, notes }),
+      body: JSON.stringify({ shiftId, declaredCash, notes, deviceId }),
+    }),
+
+  claimCashierSession: (cashierId: string, deviceId: string, registerId?: string) =>
+    fetchJson<Cashier>('/api/sessions/cashier/claim', {
+      method: 'POST',
+      body: JSON.stringify({ cashierId, deviceId, registerId }),
+    }),
+  releaseCashierSession: (cashierId: string, deviceId: string) =>
+    fetchJson<{ success: boolean }>('/api/sessions/cashier/release', {
+      method: 'POST',
+      body: JSON.stringify({ cashierId, deviceId }),
+    }),
+  claimRegisterSession: (registerId: string, deviceId: string, cashierId?: string) =>
+    fetchJson<CashRegister>('/api/sessions/register/claim', {
+      method: 'POST',
+      body: JSON.stringify({ registerId, deviceId, cashierId }),
+    }),
+  releaseRegisterSession: (registerId: string, deviceId: string) =>
+    fetchJson<{ success: boolean }>('/api/sessions/register/release', {
+      method: 'POST',
+      body: JSON.stringify({ registerId, deviceId }),
     }),
 
   // Cash Movements

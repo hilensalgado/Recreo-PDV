@@ -154,13 +154,33 @@ export default function App() {
     loadData();
   }, []);
 
-  // Handle register change
-  const handleSelectRegister = (reg: CashRegister) => {
-    setActiveRegister(reg);
-    const openShift = shifts.find((s) => s.registerId === reg.id && s.status === 'OPEN');
-    setActiveShift(openShift || null);
-    if (!openShift) {
-      setShowOpenShiftModal(true);
+  // Unique Device Identifier Helper
+  const getDeviceId = () => {
+    let devId = localStorage.getItem('recreo_device_id');
+    if (!devId) {
+      devId = 'dev-' + Math.random().toString(36).substring(2, 10) + '-' + Date.now().toString(36);
+      localStorage.setItem('recreo_device_id', devId);
+    }
+    return devId;
+  };
+
+  // Handle register change with concurrency verification
+  const handleSelectRegister = async (reg: CashRegister) => {
+    try {
+      const deviceId = getDeviceId();
+      if (reg.isOpen && reg.activeDeviceId && reg.activeDeviceId !== deviceId) {
+        alert(`Acceso denegado: La caja "${reg.name}" ya está abierta y en uso en otro equipo por ${reg.currentCashierName || 'otro usuario'}.`);
+        return;
+      }
+      await api.claimRegisterSession(reg.id, deviceId, activeCashier?.id);
+      setActiveRegister(reg);
+      const openShift = shifts.find((s) => s.registerId === reg.id && s.status === 'OPEN');
+      setActiveShift(openShift || null);
+      if (!openShift) {
+        setShowOpenShiftModal(true);
+      }
+    } catch (err: any) {
+      alert(err.message || 'No se puede seleccionar esta caja');
     }
   };
 
@@ -230,11 +250,12 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeCashier, shortcutsConfig]);
 
-  // Open Shift Handler
+  // Open Shift Handler with Device Concurrency Lock
   const handleOpenShift = async (initialCash: number) => {
     if (!activeRegister || !activeCashier) return;
     try {
-      const newShift = await api.openShift(activeRegister.id, activeCashier.id, initialCash);
+      const deviceId = getDeviceId();
+      const newShift = await api.openShift(activeRegister.id, activeCashier.id, initialCash, deviceId);
       setShifts((prev) => [newShift, ...prev]);
       setActiveShift(newShift);
       setShowOpenShiftModal(false);
@@ -244,11 +265,12 @@ export default function App() {
     }
   };
 
-  // Close Shift Handler
+  // Close Shift Handler with Device Concurrency Release
   const handleCloseShift = async (declaredCash: number, notes?: string) => {
     if (!activeShift) return;
     try {
-      const closed = await api.closeShift(activeShift.id, declaredCash, notes);
+      const deviceId = getDeviceId();
+      const closed = await api.closeShift(activeShift.id, declaredCash, notes, deviceId);
       setActiveShift(null);
       setCompletedShiftReceipt(closed);
       loadData();
@@ -537,10 +559,21 @@ export default function App() {
       {showPinModal && pendingCashierChange && (
         <PINModal
           cashier={pendingCashierChange}
-          onSuccess={() => {
-            setActiveCashier(pendingCashierChange);
-            setShowPinModal(false);
-            setPendingCashierChange(null);
+          onSuccess={async () => {
+            try {
+              const deviceId = getDeviceId();
+              await api.claimCashierSession(pendingCashierChange.id, deviceId, activeRegister?.id);
+              if (activeCashier && activeCashier.id !== pendingCashierChange.id) {
+                await api.releaseCashierSession(activeCashier.id, deviceId);
+              }
+              setActiveCashier(pendingCashierChange);
+              setShowPinModal(false);
+              setPendingCashierChange(null);
+            } catch (err: any) {
+              alert(err.message || 'El usuario seleccionado ya tiene una sesión activa en otro dispositivo.');
+              setShowPinModal(false);
+              setPendingCashierChange(null);
+            }
           }}
           onClose={() => {
             setShowPinModal(false);
