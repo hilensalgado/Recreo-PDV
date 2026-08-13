@@ -16,11 +16,12 @@ import {
 import { Product, Department } from '../types/pos';
 import { exportInventoryCSV } from '../utils/exportUtils';
 import { ImportProductsModal } from './ImportProductsModal';
-import { FileSpreadsheet } from 'lucide-react';
+import { FileSpreadsheet, Lock } from 'lucide-react';
 
 interface InventoryViewProps {
   products: Product[];
   departments: Department[];
+  isAdmin?: boolean;
   onSaveProduct: (prod: Partial<Product> & { barcode: string; name: string }) => void;
   onImportProducts?: (items: any[]) => Promise<any>;
   onDeleteProduct: (id: string) => void;
@@ -30,11 +31,29 @@ interface InventoryViewProps {
 export const InventoryView: React.FC<InventoryViewProps> = ({
   products = [],
   departments = [],
+  isAdmin = false,
   onSaveProduct,
   onImportProducts,
   onDeleteProduct,
   onAdjustStock,
 }) => {
+  if (!isAdmin) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 text-center select-none">
+        <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-md space-y-4">
+          <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-200">
+            <Lock className="w-10 h-10" />
+          </div>
+          <h2 className="font-extrabold text-2xl text-slate-800">
+            Acceso Denegado - Solo Administradores
+          </h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto font-medium">
+            El catálogo e inventario de productos está restringido únicamente a usuarios con perfil de Administrador.
+          </p>
+        </div>
+      </div>
+    );
+  }
   const [search, setSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState<string>('ALL');
   const [onlyLowStock, setOnlyLowStock] = useState(false);

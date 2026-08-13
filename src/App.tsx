@@ -197,7 +197,12 @@ export default function App() {
           break;
         case 'F8':
           e.preventDefault();
-          setActiveTab('inventory');
+          if (activeCashier?.role !== 'ADMIN') {
+            alert('Acceso denegado: El apartado de Inventario solo es accesible desde un perfil de Administrador.');
+            setActiveTab('sales');
+          } else {
+            setActiveTab('inventory');
+          }
           break;
         case 'F10':
           e.preventDefault();
@@ -378,8 +383,8 @@ export default function App() {
           } else if (tab === 'hold') {
             setActiveTab('sales');
             setShowHoldModal(true);
-          } else if (tab === 'settings' && activeCashier?.role !== 'ADMIN') {
-            alert('Acceso denegado: El apartado de Cajas y Cajeros solo es accesible desde un perfil de Administrador.');
+          } else if ((tab === 'settings' || tab === 'inventory') && activeCashier?.role !== 'ADMIN') {
+            alert('Acceso denegado: Este apartado solo es accesible desde un perfil de Administrador.');
             setActiveTab('sales');
           } else {
             setActiveTab(tab);
@@ -415,6 +420,7 @@ export default function App() {
           <InventoryView
             products={products}
             departments={departments}
+            isAdmin={activeCashier?.role === 'ADMIN'}
             onSaveProduct={async (prod) => {
               await api.saveProduct(prod);
               loadData();

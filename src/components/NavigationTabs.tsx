@@ -77,15 +77,19 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
       icon: Users,
       color: 'text-indigo-600',
     },
-    {
-      id: 'inventory' as TabType,
-      keyLabel: 'F8',
-      title: 'Inventario',
-      icon: Package,
-      color: 'text-emerald-600',
-      badge: lowStockCount > 0 ? `! ${lowStockCount}` : undefined,
-      badgeColor: 'bg-rose-500 text-white',
-    },
+    ...(isAdmin
+      ? [
+          {
+            id: 'inventory' as TabType,
+            keyLabel: 'F8',
+            title: 'Inventario',
+            icon: Package,
+            color: 'text-emerald-600',
+            badge: lowStockCount > 0 ? `! ${lowStockCount}` : undefined,
+            badgeColor: 'bg-rose-500 text-white',
+          },
+        ]
+      : []),
     {
       id: 'history' as TabType,
       keyLabel: 'F11',
