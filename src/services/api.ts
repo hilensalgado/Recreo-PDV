@@ -11,6 +11,7 @@ import {
   HoldTicket,
   CommonProduct,
   PosSummaryStats,
+  KeyboardShortcutConfig,
 } from '../types/pos';
 
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
@@ -135,8 +136,13 @@ export const api = {
   deleteCommonProduct: (id: string) =>
     fetchJson<{ success: boolean }>(`/api/common-products/${id}`, { method: 'DELETE' }),
 
-  // Summary Stats
-  getSummaryStats: () => fetchJson<PosSummaryStats>('/api/stats/summary'),
+  // Shortcuts Config
+  getShortcuts: () => fetchJson<KeyboardShortcutConfig[]>('/api/shortcuts'),
+  saveShortcuts: (shortcuts: KeyboardShortcutConfig[]) =>
+    fetchJson<KeyboardShortcutConfig[]>('/api/shortcuts', {
+      method: 'POST',
+      body: JSON.stringify({ shortcuts }),
+    }),
 
   // Reset Seed
   resetSeed: () => fetchJson<{ success: boolean; message: string }>('/api/seed/reset', { method: 'POST' }),

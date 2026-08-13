@@ -10,6 +10,7 @@ import {
   Cashier,
   HoldTicket,
   CommonProduct,
+  KeyboardShortcutConfig,
 } from '../src/types/pos';
 
 interface DatabaseSchema {
@@ -24,8 +25,21 @@ interface DatabaseSchema {
   cashiers: Cashier[];
   holdTickets: HoldTicket[];
   commonProducts: CommonProduct[];
+  shortcutsConfig: KeyboardShortcutConfig[];
   ticketCounter: number;
 }
+
+const initialShortcuts: KeyboardShortcutConfig[] = [
+  { id: 'sales', actionName: 'Ventas', defaultKey: 'F1', currentKey: 'F1', description: 'Ir a la pantalla principal de Ventas' },
+  { id: 'common', actionName: 'Prod. Comunes', defaultKey: 'F2', currentKey: 'F2', description: 'Ver catálogo de Productos Comunes / Sin Código' },
+  { id: 'movements', actionName: 'Entradas/Salidas', defaultKey: 'F3', currentKey: 'F3', description: 'Registrar Entrada o Salida de Dinero en Caja' },
+  { id: 'hold', actionName: 'En Espera', defaultKey: 'F6', currentKey: 'F6', description: 'Poner Ticket actual en Espera / Ver Guardados' },
+  { id: 'customers', actionName: 'Clientes / Crédito', defaultKey: 'F7', currentKey: 'F7', description: 'Directorio de Clientes, Créditos y Fiado' },
+  { id: 'inventory', actionName: 'Inventario', defaultKey: 'F8', currentKey: 'F8', description: 'Catálogo de Productos e Inventario (Solo Admin)' },
+  { id: 'search', actionName: 'Buscador Rápido', defaultKey: 'F10', currentKey: 'F10', description: 'Enfocar buscador de producto / Código de barras' },
+  { id: 'history', actionName: 'Ventas Realizadas', defaultKey: 'F11', currentKey: 'F11', description: 'Historial de Ventas Realizadas y Re-impresión' },
+  { id: 'cashcut', actionName: 'Corte de Caja', defaultKey: 'F12', currentKey: 'F12', description: 'Módulo de Cobro Rápido / Arqueo y Corte de Caja' },
+];
 
 const initialDepartments: Department[] = [
   { id: 'dep-1', name: 'Abarrotes', color: 'bg-blue-500' },
@@ -223,6 +237,7 @@ class DatabaseManager {
     cashiers: initialCashiers,
     holdTickets: [],
     commonProducts: initialCommonProducts,
+    shortcutsConfig: initialShortcuts,
     ticketCounter: 1001,
   };
 
@@ -239,8 +254,21 @@ class DatabaseManager {
       cashiers: [...initialCashiers],
       holdTickets: [],
       commonProducts: [...initialCommonProducts],
+      shortcutsConfig: [...initialShortcuts],
       ticketCounter: 1001,
     };
+  }
+
+  // Shortcuts Config CRUD
+  public getShortcutsConfig(): KeyboardShortcutConfig[] {
+    return this.data.shortcutsConfig || initialShortcuts;
+  }
+
+  public saveShortcutsConfig(shortcuts: KeyboardShortcutConfig[]): KeyboardShortcutConfig[] {
+    if (Array.isArray(shortcuts)) {
+      this.data.shortcutsConfig = shortcuts;
+    }
+    return this.data.shortcutsConfig;
   }
 
   // API Getters

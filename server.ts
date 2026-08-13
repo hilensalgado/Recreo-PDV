@@ -306,6 +306,24 @@ async function startServer() {
     }
   });
 
+  // Shortcuts Config
+  app.get('/api/shortcuts', (req, res) => {
+    try {
+      res.json(db.getShortcutsConfig());
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post('/api/shortcuts', (req, res) => {
+    try {
+      const config = db.saveShortcutsConfig(req.body.shortcuts || req.body);
+      res.json(config);
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
   // Reset Seed
   app.post('/api/seed/reset', (req, res) => {
     try {

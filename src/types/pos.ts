@@ -176,3 +176,11 @@ export interface PosSummaryStats {
   lowStockItemsCount: number;
   totalCreditPending: number;
 }
+
+export interface KeyboardShortcutConfig {
+  id: string;
+  actionName: string;
+  defaultKey: string;
+  currentKey: string;
+  description: string;
+}

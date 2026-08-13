@@ -12,6 +12,8 @@ import {
   CommonProduct,
   CartItem,
   PaymentMethod,
+  CustomerCreditMovement,
+  KeyboardShortcutConfig,
 } from './types/pos';
 
 // Components
@@ -36,7 +38,6 @@ import { ShortcutsHelpModal } from './components/ShortcutsHelpModal';
 import { PINModal } from './components/PINModal';
 import { CashCutReceiptModal } from './components/CashCutReceiptModal';
 import { CustomerPaymentReceiptModal } from './components/CustomerPaymentReceiptModal';
-import { CustomerCreditMovement } from './types/pos';
 
 export default function App() {
   // Navigation
@@ -53,6 +54,7 @@ export default function App() {
   const [holdTickets, setHoldTickets] = useState<HoldTicket[]>([]);
   const [commonProducts, setCommonProducts] = useState<CommonProduct[]>([]);
   const [customerMovements, setCustomerMovements] = useState<CustomerCreditMovement[]>([]);
+  const [shortcutsConfig, setShortcutsConfig] = useState<KeyboardShortcutConfig[]>([]);
 
   // Selection state
   const [activeRegister, setActiveRegister] = useState<CashRegister | null>(null);
@@ -96,7 +98,7 @@ export default function App() {
       setLoading(true);
       setErrorMsg(null);
 
-      const [pData, dData, cData, sData, rData, shData, caData, htData, cpData, cmData] = await Promise.all([
+      const [pData, dData, cData, sData, rData, shData, caData, htData, cpData, cmData, skData] = await Promise.all([
         api.getProducts(),
         api.getDepartments(),
         api.getCustomers(),
@@ -107,6 +109,7 @@ export default function App() {
         api.getHoldTickets(),
         api.getCommonProducts(),
         api.getCustomerMovements(),
+        api.getShortcuts(),
       ]);
 
       setProducts(pData || []);
@@ -119,6 +122,7 @@ export default function App() {
       setHoldTickets(htData || []);
       setCommonProducts(cpData || []);
       setCustomerMovements(cmData || []);
+      setShortcutsConfig(skData || []);
 
       // Default register & cashier selection
       if (rData && rData.length > 0) {
@@ -160,80 +164,71 @@ export default function App() {
     }
   };
 
-  // Keyboard Shortcuts (F1 to F12)
+  // Keyboard Shortcuts (Configurable per user preferences)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore if typing inside input/textarea
       const tag = (e.target as HTMLElement)?.tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        if (e.key === 'F10') {
-          e.preventDefault();
-          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-          searchInput?.focus();
-        }
         return;
       }
 
-      switch (e.key) {
-        case 'F1':
-          e.preventDefault();
+      const pressedKey = e.key.toUpperCase();
+
+      const getAssignedKey = (actionId: string, fallbackKey: string) => {
+        const item = shortcutsConfig.find((s) => s.id === actionId);
+        return (item?.currentKey || fallbackKey).toUpperCase();
+      };
+
+      if (pressedKey === getAssignedKey('sales', 'F1')) {
+        e.preventDefault();
+        setActiveTab('sales');
+      } else if (pressedKey === getAssignedKey('common', 'F2')) {
+        e.preventDefault();
+        setShowCommonModal(true);
+      } else if (pressedKey === getAssignedKey('movements', 'F3')) {
+        e.preventDefault();
+        setShowMovementsModal(true);
+      } else if (pressedKey === getAssignedKey('hold', 'F6')) {
+        e.preventDefault();
+        setShowHoldModal(true);
+      } else if (pressedKey === getAssignedKey('customers', 'F7')) {
+        e.preventDefault();
+        setActiveTab('customers');
+      } else if (pressedKey === getAssignedKey('inventory', 'F8')) {
+        e.preventDefault();
+        if (activeCashier?.role !== 'ADMIN') {
+          alert('Acceso denegado: El apartado de Inventario solo es accesible desde un perfil de Administrador.');
           setActiveTab('sales');
-          break;
-        case 'F2':
-          e.preventDefault();
-          setShowCommonModal(true);
-          break;
-        case 'F3':
-          e.preventDefault();
-          setShowMovementsModal(true);
-          break;
-        case 'F6':
-          e.preventDefault();
-          setShowHoldModal(true);
-          break;
-        case 'F7':
-          e.preventDefault();
-          setActiveTab('customers');
-          break;
-        case 'F8':
-          e.preventDefault();
-          if (activeCashier?.role !== 'ADMIN') {
-            alert('Acceso denegado: El apartado de Inventario solo es accesible desde un perfil de Administrador.');
-            setActiveTab('sales');
-          } else {
-            setActiveTab('inventory');
-          }
-          break;
-        case 'F10':
-          e.preventDefault();
-          setActiveTab('sales');
-          setTimeout(() => {
-            const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
-            searchInput?.focus();
-          }, 100);
-          break;
-        case 'F11':
-          e.preventDefault();
-          setActiveTab('history');
-          break;
-        case 'F12':
-          e.preventDefault();
-          setActiveTab('sales');
-          break;
-        case 'Escape':
-          setShowCheckoutModal(false);
-          setShowCommonModal(false);
-          setShowMovementsModal(false);
-          setShowHoldModal(false);
-          setShowShortcutsModal(false);
-          setCompletedSaleReceipt(null);
-          break;
+        } else {
+          setActiveTab('inventory');
+        }
+      } else if (pressedKey === getAssignedKey('search', 'F10')) {
+        e.preventDefault();
+        setActiveTab('sales');
+        setTimeout(() => {
+          const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
+          searchInput?.focus();
+        }, 100);
+      } else if (pressedKey === getAssignedKey('history', 'F11')) {
+        e.preventDefault();
+        setActiveTab('history');
+      } else if (pressedKey === getAssignedKey('cashcut', 'F12')) {
+        e.preventDefault();
+        setActiveTab('sales');
+      } else if (e.key === 'Escape') {
+        setShowCheckoutModal(false);
+        setShowCommonModal(false);
+        setShowMovementsModal(false);
+        setShowHoldModal(false);
+        setShowShortcutsModal(false);
+        setCompletedSaleReceipt(null);
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activeCashier, shortcutsConfig]);
 
   // Open Shift Handler
   const handleOpenShift = async (initialCash: number) => {
@@ -715,7 +710,15 @@ export default function App() {
       )}
 
       {showShortcutsModal && (
-        <ShortcutsHelpModal onClose={() => setShowShortcutsModal(false)} />
+        <ShortcutsHelpModal
+          shortcutsConfig={shortcutsConfig}
+          isAdmin={activeCashier?.role === 'ADMIN'}
+          onSaveShortcuts={async (newConfig) => {
+            await api.saveShortcuts(newConfig);
+            await loadData();
+          }}
+          onClose={() => setShowShortcutsModal(false)}
+        />
       )}
     </div>
   );
