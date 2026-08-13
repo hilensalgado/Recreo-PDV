@@ -249,21 +249,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="bg-slate-100 border-b border-slate-300 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider sticky top-0">
-                <th className="p-2.5">Código</th>
-                <th className="p-2.5">Producto</th>
-                <th className="p-2.5">Departamento</th>
-                <th className="p-2.5 text-right">Costo</th>
+              <tr className="bg-slate-100 border-b border-slate-300 text-[11px] font-extrabold text-slate-700 uppercase tracking-wider sticky top-0 select-none">
+                <th className="p-2.5">Codigo</th>
+                <th className="p-2.5">Descripcion</th>
+                <th className="p-2.5 text-right">Precio Costo</th>
                 <th className="p-2.5 text-right">Precio Venta</th>
-                <th className="p-2.5 text-right">Mayoreo</th>
-                <th className="p-2.5 text-center">Existencia</th>
+                <th className="p-2.5 text-right">Precio Mayoreo</th>
+                <th className="p-2.5 text-center">Inventario</th>
+                <th className="p-2.5 text-center">Inv. Minimo</th>
+                <th className="p-2.5">Departamento</th>
                 <th className="p-2.5 text-center">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {filteredProducts.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                  <td colSpan={9} className="p-8 text-center text-slate-400">
                     No se encontraron productos con los filtros aplicados.
                   </td>
                 </tr>
@@ -284,20 +285,19 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                           )}
                         </div>
                       </td>
-                      <td className="p-2.5 text-slate-500">{p.departmentName}</td>
-                      <td className="p-2.5 text-right text-slate-500 font-mono">
-                        ${p.costPrice.toFixed(2)}
+                      <td className="p-2.5 text-right text-slate-600 font-mono font-semibold">
+                        ${p.costPrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="p-2.5 text-right font-mono font-bold text-slate-900">
-                        ${p.salePrice.toFixed(2)}
+                      <td className="p-2.5 text-right font-mono font-black text-slate-900 text-xs">
+                        ${p.salePrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
-                      <td className="p-2.5 text-right text-amber-700 font-mono text-[11px]">
-                        ${p.wholesalePrice.toFixed(2)}{' '}
-                        <span className="text-[10px] text-slate-400">({p.wholesaleMinQty}+)</span>
+                      <td className="p-2.5 text-right text-amber-700 font-mono text-[11px] font-bold">
+                        ${p.wholesalePrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{' '}
+                        <span className="text-[10px] text-slate-400 font-normal">({p.wholesaleMinQty}+)</span>
                       </td>
                       <td className="p-2.5 text-center font-mono">
                         <span
-                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-xs text-xs font-bold ${
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-extrabold ${
                             isLowStock
                               ? 'bg-rose-100 text-rose-700 border border-rose-300'
                               : 'bg-emerald-100 text-emerald-800'
@@ -305,6 +305,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                         >
                           {isLowStock && <AlertTriangle className="w-3 h-3 text-rose-600" />}
                           {p.stock} {p.unit === 'kg' ? 'kg' : 'pzs'}
+                        </span>
+                      </td>
+                      <td className="p-2.5 text-center font-mono text-slate-600 font-semibold">
+                        {p.minStock} {p.unit === 'kg' ? 'kg' : 'pzs'}
+                      </td>
+                      <td className="p-2.5">
+                        <span className="bg-slate-100 text-slate-700 border border-slate-200 text-[10px] px-2 py-0.5 rounded font-bold">
+                          {p.departmentName || 'General'}
                         </span>
                       </td>
                       <td className="p-2.5 text-center space-x-1">
@@ -315,7 +323,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                             setShowAdjustModal(true);
                           }}
                           className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Ajustar Existencia"
+                          title="Ajustar Inventario / Stock"
                         >
                           <ArrowDownUp className="w-3.5 h-3.5" />
                         </button>
@@ -328,11 +336,11 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
                         </button>
                         <button
                           onClick={() => {
-                            if (confirm(`¿Eliminar producto "${p.name}"?`)) {
+                            if (confirm(`¿Eliminar producto ${p.name}?`)) {
                               onDeleteProduct(p.id);
                             }
                           }}
-                          className="p-1 text-slate-400 hover:text-rose-600 rounded transition-colors"
+                          className="p-1 text-rose-600 hover:bg-rose-50 rounded transition-colors"
                           title="Eliminar Producto"
                         >
                           <Trash2 className="w-3.5 h-3.5" />

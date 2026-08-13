@@ -16,31 +16,25 @@ export function downloadCSV(filename: string, csvContent: string) {
 
 export function exportInventoryCSV(products: any[]) {
   const headers = [
-    'Código de Barras',
-    'Nombre del Producto',
-    'Departamento',
+    'Codigo',
+    'Descripcion',
     'Precio Costo',
     'Precio Venta',
     'Precio Mayoreo',
-    'Min. Mayoreo',
-    'Stock Actual',
-    'Stock Mínimo',
-    'Unidad',
-    'Última Actualización',
+    'Inventario',
+    'Inv. Minimo',
+    'Departamento',
   ];
 
   const rows = products.map((p) => [
     `"${p.barcode || ''}"`,
     `"${(p.name || '').replace(/"/g, '""')}"`,
-    `"${p.departmentName || ''}"`,
     p.costPrice || 0,
     p.salePrice || 0,
     p.wholesalePrice || 0,
-    p.wholesaleMinQty || 0,
     p.stock || 0,
     p.minStock || 0,
-    `"${p.unit || 'piece'}"`,
-    `"${p.updatedAt ? new Date(p.updatedAt).toLocaleString('es-AR') : ''}"`,
+    `"${p.departmentName || 'General'}"`,
   ]);
 
   const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
