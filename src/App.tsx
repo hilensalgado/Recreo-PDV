@@ -367,6 +367,7 @@ export default function App() {
       {/* Function Key Tabs Navigation */}
       <NavigationTabs
         activeTab={activeTab}
+        isAdmin={activeCashier?.role === 'ADMIN'}
         onSelectTab={(tab) => {
           if (tab === 'common') {
             setActiveTab('sales');
@@ -377,6 +378,9 @@ export default function App() {
           } else if (tab === 'hold') {
             setActiveTab('sales');
             setShowHoldModal(true);
+          } else if (tab === 'settings' && activeCashier?.role !== 'ADMIN') {
+            alert('Acceso denegado: El apartado de Cajas y Cajeros solo es accesible desde un perfil de Administrador.');
+            setActiveTab('sales');
           } else {
             setActiveTab(tab);
           }
@@ -499,6 +503,7 @@ export default function App() {
           <RegistersCashiersView
             registers={registers}
             cashiers={cashiers}
+            isAdmin={activeCashier?.role === 'ADMIN'}
             onSaveRegister={async (reg) => {
               await api.saveRegister(reg);
               loadData();

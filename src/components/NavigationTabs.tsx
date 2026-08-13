@@ -10,6 +10,7 @@ import {
   DollarSign,
   BarChart3,
   Settings,
+  Lock,
 } from 'lucide-react';
 
 export type TabType =
@@ -26,6 +27,7 @@ export type TabType =
 
 interface NavigationTabsProps {
   activeTab: TabType;
+  isAdmin?: boolean;
   onSelectTab: (tab: TabType) => void;
   holdTicketsCount: number;
   lowStockCount: number;
@@ -33,6 +35,7 @@ interface NavigationTabsProps {
 
 export const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTab,
+  isAdmin = false,
   onSelectTab,
   holdTicketsCount,
   lowStockCount,
@@ -104,14 +107,18 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
       icon: BarChart3,
       color: 'text-blue-700',
     },
-    {
+  ];
+
+  // Only include Admin Settings tab if logged in user is Admin
+  if (isAdmin) {
+    tabs.push({
       id: 'settings' as TabType,
       keyLabel: 'CFG',
       title: 'Cajas & Cajeros',
       icon: Settings,
-      color: 'text-slate-600',
-    },
-  ];
+      color: 'text-[#2563eb]',
+    });
+  }
 
   return (
     <nav className="bg-[#e2e8f0] border-b border-slate-300 px-3 py-1.5 shadow-xs overflow-x-auto select-none">

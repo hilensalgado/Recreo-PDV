@@ -22,6 +22,7 @@ import { CashRegister, Cashier, CashierPermissions } from '../types/pos';
 interface RegistersCashiersViewProps {
   registers: CashRegister[];
   cashiers: Cashier[];
+  isAdmin?: boolean;
   onSaveRegister: (reg: Partial<CashRegister> & { name: string }) => void;
   onDeleteRegister?: (id: string) => void;
   onSaveCashier: (data: Partial<Cashier> & { name: string; pin: string }) => void;
@@ -33,6 +34,7 @@ interface RegistersCashiersViewProps {
 export const RegistersCashiersView: React.FC<RegistersCashiersViewProps> = ({
   registers = [],
   cashiers = [],
+  isAdmin = false,
   onSaveRegister,
   onDeleteRegister,
   onSaveCashier,
@@ -40,6 +42,23 @@ export const RegistersCashiersView: React.FC<RegistersCashiersViewProps> = ({
   onOpenShiftRegister,
   onCloseShiftRegister,
 }) => {
+  if (!isAdmin) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 text-center select-none">
+        <div className="bg-white p-10 rounded-2xl border border-slate-200 shadow-md space-y-4">
+          <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto border border-rose-200">
+            <Lock className="w-10 h-10" />
+          </div>
+          <h2 className="font-extrabold text-2xl text-slate-800">
+            Acceso Denegado - Solo Administradores
+          </h2>
+          <p className="text-sm text-slate-500 max-w-md mx-auto font-medium">
+            El apartado de configuración de Cajas y Cajeros está restringido únicamente a perfiles de Administrador General.
+          </p>
+        </div>
+      </div>
+    );
+  }
   // New / Edit Register Modal State
   const [showRegModal, setShowRegModal] = useState(false);
   const [editRegId, setEditRegId] = useState<string | null>(null);
