@@ -332,7 +332,7 @@ async function startServer() {
   }
 
   app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Eleventa POS Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Recreo PDV Server running on http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -25,7 +25,7 @@ export const ShortcutsHelpModal: React.FC<ShortcutsHelpModalProps> = ({ onClose 
         <div className="bg-[#1e293b] text-white p-3.5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Keyboard className="w-5 h-5 text-amber-400" />
-            <h3 className="font-bold text-sm">Atajos de Teclado Rápido (Eleventa)</h3>
+            <h3 className="font-bold text-sm">Atajos de Teclado Rápido (Recreo PDV)</h3>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
             <X className="w-5 h-5" />

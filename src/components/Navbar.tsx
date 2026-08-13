@@ -52,7 +52,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div className="flex items-center gap-2">
             <h1 className="font-extrabold text-base tracking-tight text-white leading-none">
-              eleventa <span className="text-blue-400 font-bold text-xs">PDV</span>
+              Recreo <span className="text-blue-400 font-bold text-xs">PDV</span>
             </h1>
             <span className="bg-blue-500/20 text-blue-300 text-[10px] font-bold px-1.5 py-0.5 rounded border border-blue-500/30 uppercase tracking-wide">
               v5.2 Multi-Caja
