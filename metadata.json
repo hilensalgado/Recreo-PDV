@@ -1,0 +1,6 @@
+{
+  "name": "Eleventa Punto de Venta Multi-Caja",
+  "description": "Sistema de Punto de Venta (PDV) estilo Eleventa con soporte multi-caja, inventarios, ventas en espera, crédito a clientes, cortes de caja y métricas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

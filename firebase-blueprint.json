@@ -1,0 +1,139 @@
+{
+  "collections": {
+    "products": {
+      "description": "Catalog of products available in point of sale",
+      "fields": {
+        "barcode": { "type": "string", "description": "Unique product barcode" },
+        "name": { "type": "string", "description": "Product display name" },
+        "departmentId": { "type": "string", "description": "ID of associated department" },
+        "departmentName": { "type": "string", "description": "Name of associated department" },
+        "costPrice": { "type": "number", "description": "Cost price" },
+        "salePrice": { "type": "number", "description": "Retail sale price" },
+        "wholesalePrice": { "type": "number", "description": "Wholesale price" },
+        "wholesaleMinQty": { "type": "number", "description": "Minimum quantity for wholesale price" },
+        "stock": { "type": "number", "description": "Current stock quantity" },
+        "minStock": { "type": "number", "description": "Minimum alert stock" },
+        "unit": { "type": "string", "description": "Unit of measurement (piece, kg)" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
+      }
+    },
+    "departments": {
+      "description": "Product category departments",
+      "fields": {
+        "name": { "type": "string", "description": "Department name" },
+        "color": { "type": "string", "description": "Badge color styling class" }
+      }
+    },
+    "customers": {
+      "description": "Registered customers and credit ledgers",
+      "fields": {
+        "name": { "type": "string", "description": "Customer full name" },
+        "phone": { "type": "string", "description": "Contact phone number" },
+        "email": { "type": "string", "description": "Contact email address" },
+        "address": { "type": "string", "description": "Physical address" },
+        "creditLimit": { "type": "number", "description": "Max credit allowed" },
+        "creditBalance": { "type": "number", "description": "Current credit debt balance" },
+        "notes": { "type": "string", "description": "Customer notes" },
+        "createdAt": { "type": "string", "description": "ISO timestamp when created" }
+      }
+    },
+    "sales": {
+      "description": "Completed and cancelled sales tickets",
+      "fields": {
+        "ticketNumber": { "type": "number", "description": "Sequential ticket number" },
+        "registerId": { "type": "string", "description": "Cash register terminal ID" },
+        "registerName": { "type": "string", "description": "Name of terminal" },
+        "shiftId": { "type": "string", "description": "Cash shift ID" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "cashierName": { "type": "string", "description": "Cashier display name" },
+        "customerId": { "type": "string", "description": "Customer ID if credit sale" },
+        "customerName": { "type": "string", "description": "Customer name if assigned" },
+        "items": { "type": "array", "description": "Cart items sold" },
+        "subtotal": { "type": "number", "description": "Subtotal amount" },
+        "discount": { "type": "number", "description": "Discount total" },
+        "total": { "type": "number", "description": "Final total charged" },
+        "paymentMethod": { "type": "string", "description": "Payment method (CASH, CARD, CREDIT, MIXED)" },
+        "cashPaid": { "type": "number", "description": "Cash tendered" },
+        "cardPaid": { "type": "number", "description": "Card tendered" },
+        "change": { "type": "number", "description": "Change given" },
+        "status": { "type": "string", "description": "COMPLETED or CANCELLED" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
+      }
+    },
+    "registers": {
+      "description": "Cash register terminals",
+      "fields": {
+        "name": { "type": "string", "description": "Terminal name" },
+        "location": { "type": "string", "description": "Terminal physical location" },
+        "isMain": { "type": "boolean", "description": "Whether main terminal" },
+        "isOpen": { "type": "boolean", "description": "Active open status" },
+        "currentCashierId": { "type": "string", "description": "Current active cashier ID" },
+        "currentCashierName": { "type": "string", "description": "Current active cashier name" },
+        "activeShiftId": { "type": "string", "description": "Current active shift ID" }
+      }
+    },
+    "shifts": {
+      "description": "Cash shift register cuts",
+      "fields": {
+        "registerId": { "type": "string", "description": "Cash register ID" },
+        "registerName": { "type": "string", "description": "Cash register name" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "cashierName": { "type": "string", "description": "Cashier display name" },
+        "openedAt": { "type": "string", "description": "ISO shift open timestamp" },
+        "closedAt": { "type": "string", "description": "ISO shift close timestamp" },
+        "initialCash": { "type": "number", "description": "Initial cash drawer float" },
+        "expectedCash": { "type": "number", "description": "Expected cash in drawer" },
+        "declaredCash": { "type": "number", "description": "Actual counted cash" },
+        "totalSalesCash": { "type": "number", "description": "Total cash sales" },
+        "totalSalesCard": { "type": "number", "description": "Total card sales" },
+        "totalSalesCredit": { "type": "number", "description": "Total credit sales" },
+        "totalIncomes": { "type": "number", "description": "Total manual cash deposits" },
+        "totalExpenses": { "type": "number", "description": "Total manual cash withdrawals" },
+        "notes": { "type": "string", "description": "Shift cut notes" },
+        "status": { "type": "string", "description": "OPEN or CLOSED" }
+      }
+    },
+    "cashiers": {
+      "description": "Point of sale cashiers and staff",
+      "fields": {
+        "name": { "type": "string", "description": "Cashier full name" },
+        "pin": { "type": "string", "description": "Security access PIN" },
+        "role": { "type": "string", "description": "ADMIN or CASHIER" },
+        "permissions": { "type": "map", "description": "Permission flags" }
+      }
+    },
+    "holdTickets": {
+      "description": "Tickets put on hold",
+      "fields": {
+        "label": { "type": "string", "description": "Ticket description label" },
+        "registerId": { "type": "string", "description": "Terminal register ID" },
+        "items": { "type": "array", "description": "Cart items" },
+        "customerId": { "type": "string", "description": "Customer ID if assigned" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
+      }
+    },
+    "commonProducts": {
+      "description": "Quick pick common products",
+      "fields": {
+        "name": { "type": "string", "description": "Item name" },
+        "price": { "type": "number", "description": "Price" },
+        "category": { "type": "string", "description": "Category" },
+        "iconName": { "type": "string", "description": "Lucide icon key" }
+      }
+    },
+    "movements": {
+      "description": "Cash drawer movement logs and customer debt payments",
+      "fields": {
+        "shiftId": { "type": "string", "description": "Cash shift ID" },
+        "registerId": { "type": "string", "description": "Terminal register ID" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "cashierName": { "type": "string", "description": "Cashier name" },
+        "customerId": { "type": "string", "description": "Customer ID" },
+        "type": { "type": "string", "description": "INCOME, EXPENSE, DEBT_PAYMENT" },
+        "amount": { "type": "number", "description": "Amount" },
+        "reason": { "type": "string", "description": "Description reason" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    }
+  }
+}
