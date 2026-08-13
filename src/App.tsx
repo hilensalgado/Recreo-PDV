@@ -356,9 +356,9 @@ export default function App() {
       <div className="h-screen w-screen bg-[#f0f2f5] flex flex-col items-center justify-center font-sans text-slate-800 p-4">
         <div className="bg-[#1e293b] p-6 rounded-sm shadow-xl text-white max-w-sm w-full text-center space-y-3 border border-slate-700">
           <div className="w-10 h-10 bg-blue-500 rounded flex items-center justify-center mx-auto text-white font-black text-xl animate-bounce">
-            e
+            R
           </div>
-          <h2 className="font-extrabold text-lg text-white">Cargando Eleventa PDV</h2>
+          <h2 className="font-extrabold text-lg text-white">Cargando Recreo PDV</h2>
           <p className="text-xs text-slate-400">Iniciando base de datos multi-caja y catálogo de productos...</p>
         </div>
       </div>
