@@ -15,7 +15,7 @@ export const OpenShiftModal: React.FC<OpenShiftModalProps> = ({
   onConfirmOpenShift,
   onCancel,
 }) => {
-  const [initialCashInput, setInitialCashInput] = useState('1000.00');
+  const [initialCashInput, setInitialCashInput] = useState('20000.00');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

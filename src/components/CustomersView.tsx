@@ -355,7 +355,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                           </span>
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          {new Date(m.date).toLocaleString('es-MX')}
+                          {new Date(m.date).toLocaleString('es-AR')}
                         </div>
                       </div>
 

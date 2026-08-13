@@ -37,16 +37,16 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({ sale, 
             {/* Store Header */}
             <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-400">
               <div className="font-black text-sm uppercase tracking-wider">
-                ABARROTES ELEVENTA
+                RECREO PDV - PUNTO DE VENTA
               </div>
               <div className="text-[10px] text-slate-600">
-                SUCURSAL CENTRAL MULTI-CAJA
+                SUCURSAL CENTRAL - BUENOS AIRES
               </div>
-              <div className="text-[10px] text-slate-600">RFC: ELE-800101-PDV</div>
+              <div className="text-[10px] text-slate-600">CUIT: 30-71234567-8</div>
               <div className="text-[10px] text-slate-600">
-                AV. HIDALGO #100, CENTRO, MEXICO
+                AV. CORRIENTES #1234, CABA, ARGENTINA
               </div>
-              <div className="text-[10px] text-slate-600">TEL: 555-0100-200</div>
+              <div className="text-[10px] text-slate-600">TEL: 011-4567-8900</div>
             </div>
 
             {/* Ticket Info */}
@@ -57,7 +57,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({ sale, 
               </div>
               <div className="flex justify-between">
                 <span>FECHA:</span>
-                <span>{new Date(sale.timestamp).toLocaleString('es-MX')}</span>
+                <span>{new Date(sale.timestamp).toLocaleString('es-AR')}</span>
               </div>
               <div className="flex justify-between">
                 <span>CAJA:</span>
@@ -108,7 +108,7 @@ export const ThermalReceiptModal: React.FC<ThermalReceiptModalProps> = ({ sale, 
               )}
               <div className="flex justify-between text-xs font-black pt-1">
                 <span>TOTAL:</span>
-                <span>${sale.total.toFixed(2)} MXN</span>
+                <span>${sale.total.toFixed(2)} ARS</span>
               </div>
             </div>
 

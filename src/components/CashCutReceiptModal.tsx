@@ -20,7 +20,7 @@ export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
   const formatDate = (isoString?: string) => {
     if (!isoString) return '---';
     const date = new Date(isoString);
-    return date.toLocaleString('es-MX', {
+    return date.toLocaleString('es-AR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

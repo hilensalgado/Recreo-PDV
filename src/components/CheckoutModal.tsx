@@ -116,9 +116,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
             <div className="text-right">
               <span className="text-3xl font-black text-emerald-600 tracking-tight">
-                ${total.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ${total.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className="text-xs text-slate-400 block">MXN</span>
+              <span className="text-xs text-slate-400 block font-bold">ARS ($)</span>
             </div>
           </div>
 
@@ -193,7 +193,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {paymentMethod === 'EFECTIVO' && (
             <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
               <label className="text-xs font-bold text-slate-700 block">
-                Monto Recibido del Cliente ($):
+                Monto Recibido del Cliente ($ ARS):
               </label>
 
               <div className="relative">
@@ -207,19 +207,27 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 />
               </div>
 
-              {/* Fast Bill Shortcuts */}
+              {/* Fast Bill Shortcuts (Pesos Argentinos ARS) */}
               <div className="flex flex-wrap gap-1.5 pt-1">
                 <span className="text-[11px] font-bold text-slate-400 w-full mb-1">
-                  Billete Rápido:
+                  Billetes de Pesos Argentinos (ARS):
                 </span>
-                {[total, 20, 50, 100, 200, 500].map((amount) => (
+                {[
+                  { label: 'Exacto', value: total },
+                  { label: '$500', value: 500 },
+                  { label: '$1.000', value: 1000 },
+                  { label: '$2.000', value: 2000 },
+                  { label: '$5.000', value: 5000 },
+                  { label: '$10.000', value: 10000 },
+                  { label: '$20.000', value: 20000 },
+                ].map((bill) => (
                   <button
-                    key={amount}
+                    key={bill.label}
                     type="button"
-                    onClick={() => addBill(amount)}
-                    className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-lg border border-slate-300 shadow-sm transition-colors"
+                    onClick={() => addBill(bill.value)}
+                    className="px-3 py-1.5 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-slate-800 font-bold text-xs rounded-lg border border-slate-300 shadow-xs transition-all flex items-center gap-1"
                   >
-                    ${amount.toFixed(0)}
+                    <span>💵</span> {bill.label}
                   </button>
                 ))}
               </div>
