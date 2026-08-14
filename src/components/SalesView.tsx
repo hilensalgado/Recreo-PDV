@@ -594,6 +594,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
           {/* Action Checkout Button */}
           <div className="mt-4 space-y-2">
             <button
+              id="btn-main-checkout"
               onClick={() => {
                 if (cartItems.length === 0) {
                   alert('Agrega al menos un artículo para cobrar');
@@ -607,7 +608,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
               className="w-full py-3.5 bg-[#16a34a] hover:bg-[#15803d] disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold text-base rounded-sm shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wide"
             >
               <DollarSign className="w-5 h-5 stroke-[2.5]" />
-              <span>[F12] COBRAR</span>
+              <span>COBRAR</span>
             </button>
 
             <button

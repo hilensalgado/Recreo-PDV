@@ -233,9 +233,20 @@ export default function App() {
       } else if (pressedKey === getAssignedKey('history', 'F11')) {
         e.preventDefault();
         setActiveTab('history');
-      } else if (pressedKey === getAssignedKey('cashcut', 'F12')) {
+      } else if (pressedKey === getAssignedKey('checkout', 'F12')) {
         e.preventDefault();
-        setActiveTab('sales');
+        if (activeTab !== 'sales') {
+          setActiveTab('sales');
+        }
+        setTimeout(() => {
+          const checkoutBtn = document.getElementById('btn-main-checkout') as HTMLButtonElement;
+          if (checkoutBtn) {
+            checkoutBtn.click();
+          }
+        }, 50);
+      } else if (pressedKey === getAssignedKey('cashcut', 'SHIFT+F12')) {
+        e.preventDefault();
+        setActiveTab('cashcut');
       } else if (e.key === 'Escape') {
         setShowCheckoutModal(false);
         setShowCommonModal(false);

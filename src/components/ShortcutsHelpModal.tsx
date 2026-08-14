@@ -18,7 +18,8 @@ const DEFAULT_SHORTCUTS: KeyboardShortcutConfig[] = [
   { id: 'inventory', actionName: 'Inventario', defaultKey: 'F8', currentKey: 'F8', description: 'Catálogo de Productos e Inventario (Solo Admin)' },
   { id: 'search', actionName: 'Buscador Rápido', defaultKey: 'F10', currentKey: 'F10', description: 'Enfocar buscador de producto / Código de barras' },
   { id: 'history', actionName: 'Ventas Realizadas', defaultKey: 'F11', currentKey: 'F11', description: 'Historial de Ventas Realizadas y Re-impresión' },
-  { id: 'cashcut', actionName: 'Corte de Caja', defaultKey: 'F12', currentKey: 'F12', description: 'Módulo de Cobro Rápido / Arqueo y Corte de Caja' },
+  { id: 'checkout', actionName: 'Cobrar Venta', defaultKey: 'F12', currentKey: 'F12', description: 'Abrir ventana de cobro / Registrar pago de la venta en curso' },
+  { id: 'cashcut', actionName: 'Corte de Caja', defaultKey: 'SHIFT+F12', currentKey: 'SHIFT+F12', description: 'Módulo de Arqueo y Corte de Caja' },
 ];
 
 export const ShortcutsHelpModal: React.FC<ShortcutsHelpModalProps> = ({
