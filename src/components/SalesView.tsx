@@ -366,6 +366,20 @@ export const SalesView: React.FC<SalesViewProps> = ({
                 placeholder="Escanea el código de barras o busca por nombre de producto (F10)..."
                 className="w-full pl-10 pr-24 py-2 bg-slate-50 border border-slate-300 rounded-sm text-sm font-medium text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:bg-white transition-all shadow-2xs"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery('');
+                    setShowDropdown(false);
+                    searchInputRef.current?.focus();
+                  }}
+                  className="absolute right-24 text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition-colors"
+                  title="Limpiar búsqueda"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
               <button
                 type="submit"
                 className="absolute right-1 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xs shadow-2xs transition-colors flex items-center gap-1 cursor-pointer"

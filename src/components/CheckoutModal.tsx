@@ -233,12 +233,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
 
               {/* Change Box */}
-              <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-xl flex items-center justify-between text-emerald-800 mt-2">
-                <span className="font-bold text-xs uppercase tracking-wider">
-                  Cambio a Entregar:
+              <div
+                className={`p-3.5 rounded-xl border flex items-center justify-between transition-all ${
+                  changeGiven < 0
+                    ? 'bg-rose-50 border-rose-300 text-rose-800'
+                    : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-900'
+                }`}
+              >
+                <span className="font-extrabold text-xs uppercase tracking-wider">
+                  {changeGiven < 0 ? 'Monto Restante por Pagar:' : 'VUELTO / CAMBIO A ENTREGAR:'}
                 </span>
-                <span className="text-2xl font-black">
-                  ${changeGiven.toFixed(2)}
+                <span className="text-2xl font-black font-mono">
+                  ${Math.abs(changeGiven).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ARS
                 </span>
               </div>
             </div>
