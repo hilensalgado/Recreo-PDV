@@ -184,13 +184,16 @@ export default function App() {
     }
   };
 
-  // Keyboard Shortcuts (Configurable per user preferences)
+  // Global Browser Default Lock & Configurable POS Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing inside input/textarea
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
-        return;
+      const isFKey = /^F(1[0-2]|[1-9])$/i.test(e.key);
+      const isDevToolsShortcut = (e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c');
+      const isViewSourceShortcut = (e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u');
+
+      // Unconditionally block browser default actions for F-keys, DevTools, View Source, F5 refresh
+      if (isFKey || isDevToolsShortcut || isViewSourceShortcut) {
+        e.preventDefault();
       }
 
       const pressedKey = e.key.toUpperCase();
@@ -200,23 +203,35 @@ export default function App() {
         return (item?.currentKey || fallbackKey).toUpperCase();
       };
 
+      if (e.key === 'Escape') {
+        setShowCheckoutModal(false);
+        setShowCommonModal(false);
+        setShowMovementsModal(false);
+        setShowHoldModal(false);
+        setShowShortcutsModal(false);
+        setCompletedSaleReceipt(null);
+        return;
+      }
+
+      // Ignore text typing inside inputs unless pressing a Function key
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT';
+
+      if (isTyping && !isFKey) {
+        return;
+      }
+
       if (pressedKey === getAssignedKey('sales', 'F1')) {
-        e.preventDefault();
         setActiveTab('sales');
       } else if (pressedKey === getAssignedKey('common', 'F2')) {
-        e.preventDefault();
         setShowCommonModal(true);
       } else if (pressedKey === getAssignedKey('movements', 'F3')) {
-        e.preventDefault();
         setShowMovementsModal(true);
       } else if (pressedKey === getAssignedKey('hold', 'F6')) {
-        e.preventDefault();
         setShowHoldModal(true);
       } else if (pressedKey === getAssignedKey('customers', 'F7')) {
-        e.preventDefault();
         setActiveTab('customers');
       } else if (pressedKey === getAssignedKey('inventory', 'F8')) {
-        e.preventDefault();
         if (activeCashier?.role !== 'ADMIN') {
           alert('Acceso denegado: El apartado de Inventario solo es accesible desde un perfil de Administrador.');
           setActiveTab('sales');
@@ -224,17 +239,14 @@ export default function App() {
           setActiveTab('inventory');
         }
       } else if (pressedKey === getAssignedKey('search', 'F10')) {
-        e.preventDefault();
         setActiveTab('sales');
         setTimeout(() => {
           const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
           searchInput?.focus();
         }, 100);
       } else if (pressedKey === getAssignedKey('history', 'F11')) {
-        e.preventDefault();
         setActiveTab('history');
       } else if (pressedKey === getAssignedKey('checkout', 'F12')) {
-        e.preventDefault();
         if (activeTab !== 'sales') {
           setActiveTab('sales');
         }
@@ -245,21 +257,13 @@ export default function App() {
           }
         }, 50);
       } else if (pressedKey === getAssignedKey('cashcut', 'SHIFT+F12')) {
-        e.preventDefault();
         setActiveTab('cashcut');
-      } else if (e.key === 'Escape') {
-        setShowCheckoutModal(false);
-        setShowCommonModal(false);
-        setShowMovementsModal(false);
-        setShowHoldModal(false);
-        setShowShortcutsModal(false);
-        setCompletedSaleReceipt(null);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeCashier, shortcutsConfig]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [activeCashier, activeTab, shortcutsConfig]);
 
   // Open Shift Handler with Device Concurrency Lock
   const handleOpenShift = async (initialCash: number) => {
