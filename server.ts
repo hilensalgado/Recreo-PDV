@@ -174,12 +174,12 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/products/:id', requirePermission('allowInventoryEdit'), (req, res) => {
+  app.delete('/api/products/:id', requirePermission('allowInventoryEdit'), async (req, res) => {
     try {
-      db.deleteProduct(req.params.id);
+      await db.deleteProduct(req.params.id);
       res.json({ success: true });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      res.status(500).json({ error: err.message || 'Error al eliminar producto' });
     }
   });
 

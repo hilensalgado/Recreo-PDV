@@ -993,7 +993,10 @@ class DatabaseManager {
   }
 
   // API Getters
-  public getProducts() { return this.data.products; }
+  public getProducts(includeDeleted = false) { 
+    if (includeDeleted) return this.data.products;
+    return this.data.products.filter(p => !p.isDeleted); 
+  }
   public getDepartments() { return this.data.departments; }
   public getCustomers(includeDeleted = false) { 
     if (includeDeleted) return this.data.customers;
@@ -1175,20 +1178,24 @@ class DatabaseManager {
     return { count: created + updated, created, updated };
   }
 
-  public deleteProduct(id: string) {
+  public async deleteProduct(id: string): Promise<void> {
     const prod = this.data.products.find(p => p.id === id);
-    if (prod) {
-      this.logAudit({
-        action: 'PRODUCT_DELETED',
-        entityType: 'PRODUCT',
-        entityId: prod.id,
-        entityName: prod.name,
-        summary: `Eliminación de producto "${prod.name}" (${prod.barcode})`,
-        previousValue: { ...prod },
-      });
-    }
-    this.data.products = this.data.products.filter(p => p.id !== id);
-    this.removeDoc('products', id);
+    if (!prod) return;
+
+    prod.isDeleted = true;
+    prod.updatedAt = new Date().toISOString();
+
+    this.logAudit({
+      action: 'PRODUCT_DELETED',
+      entityType: 'PRODUCT',
+      entityId: prod.id,
+      entityName: prod.name,
+      summary: `Baja lógica de producto "${prod.name}" (${prod.barcode})`,
+      previousValue: { ...prod },
+    });
+
+    await this.persistDoc('products', id, prod);
+    this.emitSync('products');
   }
 
   public adjustStock(productId: string, quantityDelta: number, reason: string): Product | null {
