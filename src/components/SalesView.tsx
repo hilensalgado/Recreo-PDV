@@ -76,11 +76,48 @@ export const SalesView: React.FC<SalesViewProps> = ({
   onOpenReturns,
   activeRegisterName,
 }) => {
-  // Multi-Ticket Drafts State
-  const [tickets, setTickets] = useState<DraftTicket[]>([
-    { id: 't-1', name: 'Ticket 1', items: [] },
-  ]);
-  const [activeTicketId, setActiveTicketId] = useState<string>('t-1');
+  const DRAFT_TICKETS_KEY = 'recreo_pdv_draft_tickets';
+  const DRAFT_ACTIVE_KEY = 'recreo_pdv_active_ticket_id';
+
+  // Multi-Ticket Drafts State with LocalStorage Persistence
+  const [tickets, setTickets] = useState<DraftTicket[]>(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_TICKETS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // ignore
+    }
+    return [{ id: 't-1', name: 'Ticket 1', items: [] }];
+  });
+
+  const [activeTicketId, setActiveTicketId] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(DRAFT_ACTIVE_KEY);
+      if (saved) return saved;
+    } catch {
+      // ignore
+    }
+    return 't-1';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_TICKETS_KEY, JSON.stringify(tickets));
+    } catch (err) {
+      console.warn('Error guardando carritos en localStorage:', err);
+    }
+  }, [tickets]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(DRAFT_ACTIVE_KEY, activeTicketId);
+    } catch (err) {
+      console.warn('Error guardando ticket activo en localStorage:', err);
+    }
+  }, [activeTicketId]);
 
   // Active Draft Cart shortcuts
   const activeTicket = tickets.find((t) => t.id === activeTicketId) || tickets[0] || { id: 't-1', name: 'Ticket 1', items: [] };
@@ -552,14 +589,29 @@ export const SalesView: React.FC<SalesViewProps> = ({
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
-    const q = searchQuery.toLowerCase().trim();
+    let multiplier = 1;
+    let rawQuery = searchQuery.trim();
+
+    // Check for N*BARCODE syntax (e.g. 5*779123456 or 2.5*779123456)
+    if (rawQuery.includes('*')) {
+      const parts = rawQuery.split('*');
+      if (parts.length === 2) {
+        const parsedQty = parseFloat(parts[0]);
+        if (!isNaN(parsedQty) && parsedQty > 0) {
+          multiplier = parsedQty;
+          rawQuery = parts[1].trim();
+        }
+      }
+    }
+
+    const q = rawQuery.toLowerCase();
 
     // Check exact match for active promotion code
     const exactPromo = (promotions || []).find(
       (promo) => promo.status === 'ACTIVE' && promo.code.toLowerCase() === q
     );
     if (exactPromo) {
-      handleAddPromotionToCart(exactPromo, 1);
+      handleAddPromotionToCart(exactPromo, multiplier);
       return;
     }
 
@@ -568,17 +620,17 @@ export const SalesView: React.FC<SalesViewProps> = ({
       (p) => p.barcode.toLowerCase() === q
     );
     if (exactProd) {
-      handleAddProductToCart(exactProd, 1);
+      handleAddProductToCart(exactProd, multiplier);
       return;
     }
 
     // If no exact match, add first promo result or product result
     if (searchPromoResults.length > 0) {
-      handleAddPromotionToCart(searchPromoResults[0], 1);
+      handleAddPromotionToCart(searchPromoResults[0], multiplier);
     } else if (searchResults.length > 0) {
-      handleAddProductToCart(searchResults[0], 1);
+      handleAddProductToCart(searchResults[0], multiplier);
     } else {
-      alert(`Producto o promoción con código "${searchQuery}" no encontrado`);
+      alert(`Producto o promoción con código "${rawQuery}" no encontrado`);
     }
   };
 
