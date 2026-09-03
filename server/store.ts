@@ -995,7 +995,10 @@ class DatabaseManager {
   // API Getters
   public getProducts() { return this.data.products; }
   public getDepartments() { return this.data.departments; }
-  public getCustomers() { return this.data.customers; }
+  public getCustomers(includeDeleted = false) { 
+    if (includeDeleted) return this.data.customers;
+    return this.data.customers.filter(c => !c.isDeleted); 
+  }
   public getCustomerMovements() { return this.data.customerMovements; }
   public getSales() { return this.data.sales; }
   public getReturns() { return this.data.returns; }
@@ -2816,9 +2819,28 @@ class DatabaseManager {
     return newCust;
   }
 
-  public deleteCustomer(id: string) {
-    this.data.customers = this.data.customers.filter(c => c.id !== id);
-    this.removeDoc('customers', id);
+  public async deleteCustomer(id: string): Promise<void> {
+    const customer = this.data.customers.find(c => c.id === id);
+    if (!customer) return;
+
+    if (customer.creditBalance && customer.creditBalance > 0) {
+      throw new Error(`No se puede eliminar un cliente con un saldo adeudado activo de $${customer.creditBalance.toFixed(2)}.`);
+    }
+
+    customer.isDeleted = true;
+    customer.updatedAt = new Date().toISOString();
+
+    this.logAudit({
+      action: 'CUSTOMER_DELETED',
+      entityType: 'CUSTOMER',
+      entityId: customer.id,
+      entityName: customer.name,
+      summary: `Baja lógica de cliente "${customer.name}"`,
+      previousValue: { ...customer },
+    });
+
+    await this.persistDoc('customers', id, customer);
+    this.emitSync('customers');
   }
 
   // Hold Tickets (Ventas en Espera)

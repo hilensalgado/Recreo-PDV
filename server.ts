@@ -446,12 +446,15 @@ async function startServer() {
     }
   });
 
-  app.delete('/api/customers/:id', (req, res) => {
+  app.delete('/api/customers/:id', async (req, res) => {
     try {
-      db.deleteCustomer(req.params.id);
+      await db.deleteCustomer(req.params.id);
       res.json({ success: true });
     } catch (err: any) {
-      res.status(500).json({ error: err.message });
+      if (err.message && err.message.includes('saldo adeudado')) {
+        return res.status(400).json({ error: err.message });
+      }
+      res.status(500).json({ error: err.message || 'Error al eliminar cliente' });
     }
   });
 
