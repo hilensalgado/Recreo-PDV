@@ -62,7 +62,7 @@ export const CustomerPaymentReceiptModal: React.FC<CustomerPaymentReceiptModalPr
         <div className="p-4 overflow-y-auto flex-1 bg-slate-900 flex justify-center">
           <div
             id="printable-ticket"
-            className="bg-white text-slate-900 w-[290px] p-5 shadow-md font-mono text-[11px] leading-tight select-text rounded-sm border border-slate-200"
+            className="printable-receipt bg-white text-slate-900 w-[290px] p-5 shadow-md font-mono text-[11px] leading-tight select-text rounded-sm border border-slate-200"
           >
             {/* Ticket Header */}
             <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-400">

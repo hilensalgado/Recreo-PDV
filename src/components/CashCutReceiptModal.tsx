@@ -1,18 +1,23 @@
-import React from 'react';
-import { Printer, X, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Printer, X, CheckCircle, AlertTriangle, FileText, Trash2 } from 'lucide-react';
 import { CashShift, CashRegister } from '../types/pos';
 
 interface CashCutReceiptModalProps {
   shift: CashShift;
   register?: CashRegister | null;
   onClose: () => void;
+  onDeleteShift?: (shiftId: string) => Promise<void> | void;
 }
 
 export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
   shift,
   register,
   onClose,
+  onDeleteShift,
 }) => {
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handlePrint = () => {
     window.print();
   };
@@ -56,7 +61,7 @@ export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
         <div className="p-4 overflow-y-auto flex-1 bg-slate-900 flex justify-center">
           <div
             id="printable-ticket"
-            className="bg-white text-slate-900 w-[300px] p-5 shadow-md font-mono text-[11px] leading-tight select-text rounded-sm border border-slate-200"
+            className="printable-receipt bg-white text-slate-900 w-[300px] p-5 shadow-md font-mono text-[11px] leading-tight select-text rounded-sm border border-slate-200"
           >
             {/* Ticket Header */}
             <div className="text-center space-y-1 pb-3 border-b border-dashed border-slate-400">
@@ -96,27 +101,27 @@ export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
               </div>
               <div className="flex justify-between">
                 <span>Fondo Inicial de Caja:</span>
-                <span className="font-bold">${shift.initialCash.toFixed(2)}</span>
+                <span className="font-bold">${(shift.initialCash || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ventas en Efectivo (+):</span>
-                <span className="font-bold text-emerald-700">${shift.totalSalesCash.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700">${(shift.totalSalesCash || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ventas con Tarjeta:</span>
-                <span className="font-bold text-blue-700">${shift.totalSalesCard.toFixed(2)}</span>
+                <span className="font-bold text-blue-700">${(shift.totalSalesCard || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Ventas a Crédito:</span>
-                <span className="font-bold text-amber-700">${shift.totalSalesCredit.toFixed(2)}</span>
+                <span className="font-bold text-amber-700">${(shift.totalSalesCredit || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Entradas de Dinero (+):</span>
-                <span className="font-bold text-emerald-700">${shift.totalIncomes.toFixed(2)}</span>
+                <span className="font-bold text-emerald-700">${(shift.totalIncomes || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Salidas / Gastos (-):</span>
-                <span className="font-bold text-rose-700">${shift.totalExpenses.toFixed(2)}</span>
+                <span className="font-bold text-rose-700">${(shift.totalExpenses || 0).toFixed(2)}</span>
               </div>
             </div>
 
@@ -124,7 +129,7 @@ export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
             <div className="py-3 space-y-2 border-b border-dashed border-slate-400">
               <div className="flex justify-between text-xs font-bold">
                 <span>EFECTIVO ESPERADO:</span>
-                <span>${shift.expectedCash.toFixed(2)}</span>
+                <span>${(shift.expectedCash || 0).toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-xs font-bold text-blue-800">
                 <span>EFECTIVO DECLARADO:</span>
@@ -172,20 +177,76 @@ export const CashCutReceiptModal: React.FC<CashCutReceiptModalProps> = ({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="px-5 py-3.5 bg-slate-800/80 border-t border-slate-700/80 flex items-center justify-between gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg transition-colors"
-          >
-            Cerrar
-          </button>
-          <button
-            onClick={handlePrint}
-            className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-md flex items-center gap-2 transition-colors"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Imprimir Ticket Z</span>
-          </button>
+        <div className="px-5 py-3.5 bg-slate-800/80 border-t border-slate-700/80 flex flex-col gap-3">
+          {showConfirmDelete ? (
+            <div className="bg-rose-950/60 border border-rose-600/50 p-3 rounded-lg flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-rose-300 text-xs font-bold">
+                <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />
+                <span>¿Eliminar este cierre de caja de la base de datos?</span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                Esta acción borrará permanentemente este turno y sus datos arqueados.
+              </p>
+              <div className="flex justify-end gap-2 pt-1">
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={() => setShowConfirmDelete(false)}
+                  className="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={async () => {
+                    if (!onDeleteShift) return;
+                    setIsDeleting(true);
+                    try {
+                      await onDeleteShift(shift.id);
+                      onClose();
+                    } catch (err) {
+                      console.error(err);
+                      setIsDeleting(false);
+                    }
+                  }}
+                  className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>{isDeleting ? 'Eliminando...' : 'Sí, eliminar cierre'}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={onClose}
+                  className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                >
+                  Cerrar
+                </button>
+                {onDeleteShift && (
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmDelete(true)}
+                    className="px-3 py-2 bg-rose-900/30 hover:bg-rose-900/50 text-rose-300 hover:text-rose-200 border border-rose-700/40 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title="Eliminar este cierre de caja ficticio / de prueba"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Eliminar Cierre</span>
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={handlePrint}
+                className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-md flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <Printer className="w-4 h-4" />
+                <span>Imprimir Ticket Z</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

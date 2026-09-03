@@ -13,13 +13,15 @@ const DEFAULT_SHORTCUTS: KeyboardShortcutConfig[] = [
   { id: 'sales', actionName: 'Ventas', defaultKey: 'F1', currentKey: 'F1', description: 'Ir a la pantalla principal de Ventas' },
   { id: 'common', actionName: 'Prod. Comunes', defaultKey: 'F2', currentKey: 'F2', description: 'Ver catálogo de Productos Comunes / Sin Código' },
   { id: 'movements', actionName: 'Entradas/Salidas', defaultKey: 'F3', currentKey: 'F3', description: 'Registrar Entrada o Salida de Dinero en Caja' },
+  { id: 'returns', actionName: 'Devoluciones / Reembolsos', defaultKey: 'F4', currentKey: 'F4', description: 'Devolución de mercadería, reintegro a inventario y reembolso' },
+  { id: 'promos', actionName: 'Promociones & Combos', defaultKey: 'F5', currentKey: 'F5', description: 'Catálogo de ofertas, combos, 2x1 y descuentos' },
   { id: 'hold', actionName: 'En Espera', defaultKey: 'F6', currentKey: 'F6', description: 'Poner Ticket actual en Espera / Ver Guardados' },
   { id: 'customers', actionName: 'Clientes / Crédito', defaultKey: 'F7', currentKey: 'F7', description: 'Directorio de Clientes, Créditos y Fiado' },
-  { id: 'inventory', actionName: 'Inventario', defaultKey: 'F8', currentKey: 'F8', description: 'Catálogo de Productos e Inventario (Solo Admin)' },
-  { id: 'search', actionName: 'Buscador Rápido', defaultKey: 'F10', currentKey: 'F10', description: 'Enfocar buscador de producto / Código de barras' },
-  { id: 'history', actionName: 'Ventas Realizadas', defaultKey: 'F11', currentKey: 'F11', description: 'Historial de Ventas Realizadas y Re-impresión' },
-  { id: 'checkout', actionName: 'Cobrar Venta', defaultKey: 'F12', currentKey: 'F12', description: 'Abrir ventana de cobro / Registrar pago de la venta en curso' },
-  { id: 'cashcut', actionName: 'Corte de Caja', defaultKey: 'SHIFT+F12', currentKey: 'SHIFT+F12', description: 'Módulo de Arqueo y Corte de Caja' },
+  { id: 'inventory', actionName: 'Inventario', defaultKey: 'F8', currentKey: 'F8', description: 'Catálogo de Productos e Inventario' },
+  { id: 'history', actionName: 'Ventas Realizadas', defaultKey: 'F9', currentKey: 'F9', description: 'Historial de Ventas Realizadas y Re-impresión' },
+  { id: 'cashcut', actionName: 'Corte de Caja', defaultKey: 'F10', currentKey: 'F10', description: 'Módulo de Arqueo y Corte de Caja' },
+  { id: 'analytics', actionName: 'Reportes', defaultKey: 'F11', currentKey: 'F11', description: 'Métricas, Reportes y Estadísticas de Ventas' },
+  { id: 'checkout', actionName: 'Cobrar Venta', defaultKey: 'F12', currentKey: 'F12', description: 'Abrir ventana de cobro (En módulo de cobro: F2 o Enter finaliza venta)' },
 ];
 
 export const ShortcutsHelpModal: React.FC<ShortcutsHelpModalProps> = ({

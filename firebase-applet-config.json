@@ -1,12 +1,12 @@
 {
-  "projectId": "",
-  "appId": "",
-  "apiKey": "",
-  "authDomain": "",
-  "firestoreDatabaseId": "",
-  "storageBucket": "",
-  "messagingSenderId": "",
+  "projectId": "stone-spirit-5xctm",
+  "appId": "1:11456895838:web:e331585fb9209b75654dcf",
+  "apiKey": "AIzaSyDw86aMliijPPGvzDVKAcN5jGs3RaIRZjk",
+  "authDomain": "stone-spirit-5xctm.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-recreopdv-44f5fed4-768d-4e15-aee6-e560e4ee1103",
+  "storageBucket": "stone-spirit-5xctm.firebasestorage.app",
+  "messagingSenderId": "11456895838",
   "measurementId": "",
-  "oAuthClientId": "",
+  "oAuthClientId": "11456895838-ok7hkekglk7j3t29j7joj3lu7o534agp.apps.googleusercontent.com",
   "recaptchaSiteKey": ""
 }

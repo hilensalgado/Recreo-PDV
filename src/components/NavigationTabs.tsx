@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   ShoppingCart,
   Grid,
@@ -10,13 +10,17 @@ import {
   DollarSign,
   BarChart3,
   Settings,
-  Lock,
+  ChevronLeft,
+  ChevronRight,
+  Tag,
 } from 'lucide-react';
+import { CashierPermissions } from '../types/pos';
 
 export type TabType =
   | 'sales'
   | 'common'
   | 'movements'
+  | 'promotions'
   | 'hold'
   | 'customers'
   | 'inventory'
@@ -28,6 +32,7 @@ export type TabType =
 interface NavigationTabsProps {
   activeTab: TabType;
   isAdmin?: boolean;
+  permissions?: CashierPermissions;
   onSelectTab: (tab: TabType) => void;
   holdTicketsCount: number;
   lowStockCount: number;
@@ -36,10 +41,56 @@ interface NavigationTabsProps {
 export const NavigationTabs: React.FC<NavigationTabsProps> = ({
   activeTab,
   isAdmin = false,
+  permissions,
   onSelectTab,
   holdTicketsCount,
   lowStockCount,
 }) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setCanScrollLeft(scrollLeft > 2);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 2);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+
+    checkScroll();
+
+    const handleWheel = (e: WheelEvent) => {
+      if (el.scrollWidth > el.clientWidth) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+          e.preventDefault();
+          el.scrollLeft += e.deltaY;
+          checkScroll();
+        }
+      }
+    };
+
+    el.addEventListener('scroll', checkScroll);
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    window.addEventListener('resize', checkScroll);
+
+    return () => {
+      el.removeEventListener('scroll', checkScroll);
+      el.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('resize', checkScroll);
+    };
+  }, [checkScroll]);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollContainerRef.current) return;
+    const amount = direction === 'left' ? -220 : 220;
+    scrollContainerRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+    setTimeout(checkScroll, 250);
+  };
+
   const tabs = [
     {
       id: 'sales' as TabType,
@@ -63,6 +114,13 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
       color: 'text-amber-600',
     },
     {
+      id: 'promotions' as TabType,
+      keyLabel: 'F5',
+      title: 'Promociones & Combos',
+      icon: Tag,
+      color: 'text-purple-600',
+    },
+    {
       id: 'hold' as TabType,
       keyLabel: 'F6',
       title: 'En Espera',
@@ -77,36 +135,32 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
       icon: Users,
       color: 'text-indigo-600',
     },
-    ...(isAdmin
-      ? [
-          {
-            id: 'inventory' as TabType,
-            keyLabel: 'F8',
-            title: 'Inventario',
-            icon: Package,
-            color: 'text-emerald-600',
-            badge: lowStockCount > 0 ? `! ${lowStockCount}` : undefined,
-            badgeColor: 'bg-rose-500 text-white',
-          },
-        ]
-      : []),
+    {
+      id: 'inventory' as TabType,
+      keyLabel: 'F8',
+      title: 'Inventario',
+      icon: Package,
+      color: 'text-emerald-600',
+      badge: lowStockCount > 0 ? `! ${lowStockCount}` : undefined,
+      badgeColor: 'bg-rose-500 text-white',
+    },
     {
       id: 'history' as TabType,
-      keyLabel: 'F11',
+      keyLabel: 'F9',
       title: 'Ventas Realizadas',
       icon: Receipt,
       color: 'text-teal-600',
     },
     {
       id: 'cashcut' as TabType,
-      keyLabel: 'F12',
+      keyLabel: 'F10',
       title: 'Corte de Caja',
       icon: DollarSign,
       color: 'text-emerald-700',
     },
     {
       id: 'analytics' as TabType,
-      keyLabel: 'REP',
+      keyLabel: 'F11',
       title: 'Reportes',
       icon: BarChart3,
       color: 'text-blue-700',
@@ -124,50 +178,97 @@ export const NavigationTabs: React.FC<NavigationTabsProps> = ({
     });
   }
 
-  return (
-    <nav className="bg-[#e2e8f0] border-b border-slate-300 px-3 py-1.5 shadow-xs overflow-x-auto select-none">
-      <div className="w-full flex items-center gap-1.5 min-w-max">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+  // Permissions & Role Filtering
+  const canViewReports = isAdmin || (permissions ? permissions.allowReports === true : true);
+  const canViewMovements = isAdmin || (permissions ? permissions.allowCashMovements !== false : true);
+  const canViewCommon = isAdmin || (permissions ? permissions.allowCommonProducts !== false : true);
+  const canViewHold = isAdmin || (permissions ? permissions.allowHoldTickets !== false : true);
 
-          return (
-            <button
-              key={tab.id}
-              onClick={() => onSelectTab(tab.id)}
-              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-sm font-bold text-xs transition-all cursor-pointer ${
-                isActive
-                  ? 'bg-[#1e293b] text-white border border-[#1e293b] shadow-xs'
-                  : 'bg-white text-slate-800 hover:bg-slate-50 border border-slate-300 shadow-2xs'
-              }`}
-            >
-              <span
-                className={`text-[10px] font-black font-mono px-1.5 py-0.5 rounded-xs uppercase tracking-wider ${
+  const visibleTabs = tabs.filter((tab) => {
+    if (tab.id === 'analytics' && !canViewReports) return false;
+    if (tab.id === 'movements' && !canViewMovements) return false;
+    if (tab.id === 'common' && !canViewCommon) return false;
+    if (tab.id === 'hold' && !canViewHold) return false;
+    return true;
+  });
+
+  return (
+    <nav className="bg-[#e2e8f0] border-b border-slate-300 shadow-xs select-none relative flex items-center">
+      {/* Scroll Left Button for Web */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => scroll('left')}
+          className="hidden md:flex absolute left-0 z-20 h-full px-1.5 items-center justify-center bg-gradient-to-r from-slate-300 via-slate-200 to-transparent hover:from-slate-400 text-slate-800 transition-colors cursor-pointer"
+          title="Desplazar menú a la izquierda"
+          aria-label="Desplazar a la izquierda"
+        >
+          <ChevronLeft className="w-4 h-4 bg-white/80 rounded-full shadow-xs" />
+        </button>
+      )}
+
+      {/* Tabs Container with Visible Scrollbar */}
+      <div
+        ref={scrollContainerRef}
+        className="w-full px-2 sm:px-3 pt-1.5 pb-2 overflow-x-auto custom-scrollbar touch-pan-x"
+      >
+        <div className="w-full flex items-center gap-1 sm:gap-1.5 min-w-max">
+          {visibleTabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onSelectTab(tab.id)}
+                className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-md font-bold text-xs transition-all cursor-pointer min-h-[36px] ${
                   isActive
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-slate-200 text-slate-700'
+                    ? 'bg-[#1e293b] text-white border border-[#1e293b] shadow-xs'
+                    : 'bg-white text-slate-800 hover:bg-slate-50 border border-slate-300 shadow-2xs active:bg-slate-100'
                 }`}
               >
-                {tab.keyLabel}
-              </span>
-
-              <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-blue-400' : tab.color}`} />
-
-              <span>{tab.title}</span>
-
-              {tab.badge !== undefined && (
                 <span
-                  className={`ml-1 text-[10px] font-bold px-1.5 py-0.2 rounded-full ${
-                    tab.badgeColor || (isActive ? 'bg-amber-400 text-slate-950' : 'bg-blue-600 text-white')
+                  className={`text-[9px] sm:text-[10px] font-black font-mono px-1.5 py-0.5 rounded-xs uppercase tracking-wider ${
+                    isActive
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-slate-200 text-slate-700'
                   }`}
                 >
-                  {tab.badge}
+                  {tab.keyLabel}
                 </span>
-              )}
-            </button>
-          );
-        })}
+
+                <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${isActive ? 'text-blue-400' : tab.color}`} />
+
+                <span className="whitespace-nowrap">{tab.title}</span>
+
+                {tab.badge !== undefined && (
+                  <span
+                    className={`ml-1 text-[9px] sm:text-[10px] font-bold px-1.5 py-0.2 rounded-full shrink-0 ${
+                      tab.badgeColor || (isActive ? 'bg-amber-400 text-slate-950' : 'bg-blue-600 text-white')
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Scroll Right Button for Web */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={() => scroll('right')}
+          className="hidden md:flex absolute right-0 z-20 h-full px-1.5 items-center justify-center bg-gradient-to-l from-slate-300 via-slate-200 to-transparent hover:from-slate-400 text-slate-800 transition-colors cursor-pointer"
+          title="Desplazar menú a la derecha"
+          aria-label="Desplazar a la derecha"
+        >
+          <ChevronRight className="w-4 h-4 bg-white/80 rounded-full shadow-xs" />
+        </button>
+      )}
     </nav>
   );
 };
+

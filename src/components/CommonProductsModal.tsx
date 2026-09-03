@@ -84,6 +84,7 @@ export const CommonProductsModal: React.FC<CommonProductsModalProps> = ({
     onAddCommonItem(customName.trim(), p);
     setCustomName('');
     setCustomPrice('');
+    onClose();
   };
 
   const handleOpenAddPreset = () => {

@@ -1,5 +1,6 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import firebaseConfig from '../../firebase-applet-config.json';
 
 // Initialize Firebase App conditionally if apiKey exists
@@ -20,6 +21,10 @@ const app = isFirebaseConfigured
 export const db = (app && isFirebaseConfigured) 
   ? (firebaseConfig.firestoreDatabaseId ? getFirestore(app, firebaseConfig.firestoreDatabaseId) : getFirestore(app))
   : null;
+
+// Initialize Firebase Auth if configured
+export const auth = (app && isFirebaseConfigured) ? getAuth(app) : null;
+export const googleProvider = new GoogleAuthProvider();
 
 export default app;
 

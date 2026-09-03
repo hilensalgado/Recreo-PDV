@@ -1,8 +1,10 @@
 {
-  "collections": {
-    "products": {
+  "entities": {
+    "Product": {
+      "title": "Product",
       "description": "Catalog of products available in point of sale",
-      "fields": {
+      "type": "object",
+      "properties": {
         "barcode": { "type": "string", "description": "Unique product barcode" },
         "name": { "type": "string", "description": "Product display name" },
         "departmentId": { "type": "string", "description": "ID of associated department" },
@@ -15,31 +17,63 @@
         "minStock": { "type": "number", "description": "Minimum alert stock" },
         "unit": { "type": "string", "description": "Unit of measurement (piece, kg)" },
         "updatedAt": { "type": "string", "description": "ISO timestamp of last update" }
-      }
+      },
+      "required": ["barcode", "name", "salePrice"]
     },
-    "departments": {
+    "Department": {
+      "title": "Department",
       "description": "Product category departments",
-      "fields": {
+      "type": "object",
+      "properties": {
         "name": { "type": "string", "description": "Department name" },
         "color": { "type": "string", "description": "Badge color styling class" }
-      }
+      },
+      "required": ["name"]
     },
-    "customers": {
-      "description": "Registered customers and credit ledgers",
-      "fields": {
+    "Customer": {
+      "title": "Customer",
+      "description": "Registered customers and credit accounts",
+      "type": "object",
+      "properties": {
         "name": { "type": "string", "description": "Customer full name" },
         "phone": { "type": "string", "description": "Contact phone number" },
         "email": { "type": "string", "description": "Contact email address" },
         "address": { "type": "string", "description": "Physical address" },
         "creditLimit": { "type": "number", "description": "Max credit allowed" },
         "creditBalance": { "type": "number", "description": "Current credit debt balance" },
+        "taxId": { "type": "string", "description": "RFC / CUIT / Tax ID" },
+        "taxRegime": { "type": "string", "description": "Tax regime for fiscal invoicing" },
+        "cfdiUsage": { "type": "string", "description": "CFDI / Fiscal usage code" },
+        "fiscalAddress": { "type": "string", "description": "Registered fiscal address" },
+        "postalCode": { "type": "string", "description": "Postal code" },
+        "isEmployee": { "type": "boolean", "description": "Whether customer is an employee" },
+        "employeeDiscountPercentage": { "type": "number", "description": "Employee discount percentage" },
         "notes": { "type": "string", "description": "Customer notes" },
         "createdAt": { "type": "string", "description": "ISO timestamp when created" }
-      }
+      },
+      "required": ["name"]
     },
-    "sales": {
+    "CustomerCreditMovement": {
+      "title": "CustomerCreditMovement",
+      "description": "Ledger movements of customer credit debts and payments",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string", "description": "Customer ID" },
+        "type": { "type": "string", "description": "PURCHASE or PAYMENT" },
+        "amount": { "type": "number", "description": "Transaction amount" },
+        "description": { "type": "string", "description": "Movement description" },
+        "date": { "type": "string", "description": "ISO timestamp" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "registerId": { "type": "string", "description": "Register ID" },
+        "saleId": { "type": "string", "description": "Sale ID if linked" }
+      },
+      "required": ["customerId", "type", "amount", "date"]
+    },
+    "Sale": {
+      "title": "Sale",
       "description": "Completed and cancelled sales tickets",
-      "fields": {
+      "type": "object",
+      "properties": {
         "ticketNumber": { "type": "number", "description": "Sequential ticket number" },
         "registerId": { "type": "string", "description": "Cash register terminal ID" },
         "registerName": { "type": "string", "description": "Name of terminal" },
@@ -48,21 +82,47 @@
         "cashierName": { "type": "string", "description": "Cashier display name" },
         "customerId": { "type": "string", "description": "Customer ID if credit sale" },
         "customerName": { "type": "string", "description": "Customer name if assigned" },
-        "items": { "type": "array", "description": "Cart items sold" },
+        "items": { "type": "string", "description": "Cart items sold array" },
         "subtotal": { "type": "number", "description": "Subtotal amount" },
         "discount": { "type": "number", "description": "Discount total" },
         "total": { "type": "number", "description": "Final total charged" },
-        "paymentMethod": { "type": "string", "description": "Payment method (CASH, CARD, CREDIT, MIXED)" },
+        "paymentMethod": { "type": "string", "description": "Payment method" },
         "cashPaid": { "type": "number", "description": "Cash tendered" },
         "cardPaid": { "type": "number", "description": "Card tendered" },
         "change": { "type": "number", "description": "Change given" },
         "status": { "type": "string", "description": "COMPLETED or CANCELLED" },
         "createdAt": { "type": "string", "description": "ISO creation timestamp" }
-      }
+      },
+      "required": ["ticketNumber", "total", "status", "createdAt"]
     },
-    "registers": {
+    "SaleReturn": {
+      "title": "SaleReturn",
+      "description": "Merchandise return and refund records",
+      "type": "object",
+      "properties": {
+        "returnNumber": { "type": "number", "description": "Sequential return number" },
+        "saleId": { "type": "string", "description": "Original sale ID if linked" },
+        "ticketNumber": { "type": "number", "description": "Original ticket number if linked" },
+        "registerId": { "type": "string", "description": "Cash register terminal ID" },
+        "registerName": { "type": "string", "description": "Register name" },
+        "shiftId": { "type": "string", "description": "Cash shift ID" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "cashierName": { "type": "string", "description": "Cashier name" },
+        "customerId": { "type": "string", "description": "Customer ID if linked" },
+        "customerName": { "type": "string", "description": "Customer name" },
+        "items": { "type": "string", "description": "Returned items list array" },
+        "totalAmount": { "type": "number", "description": "Total refunded amount" },
+        "refundType": { "type": "string", "description": "CASH, CUSTOMER_CREDIT, or CURRENT_CART" },
+        "reason": { "type": "string", "description": "Reason for return" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["returnNumber", "totalAmount", "timestamp"]
+    },
+    "CashRegister": {
+      "title": "CashRegister",
       "description": "Cash register terminals",
-      "fields": {
+      "type": "object",
+      "properties": {
         "name": { "type": "string", "description": "Terminal name" },
         "location": { "type": "string", "description": "Terminal physical location" },
         "isMain": { "type": "boolean", "description": "Whether main terminal" },
@@ -70,11 +130,14 @@
         "currentCashierId": { "type": "string", "description": "Current active cashier ID" },
         "currentCashierName": { "type": "string", "description": "Current active cashier name" },
         "activeShiftId": { "type": "string", "description": "Current active shift ID" }
-      }
+      },
+      "required": ["name"]
     },
-    "shifts": {
+    "CashShift": {
+      "title": "CashShift",
       "description": "Cash shift register cuts",
-      "fields": {
+      "type": "object",
+      "properties": {
         "registerId": { "type": "string", "description": "Cash register ID" },
         "registerName": { "type": "string", "description": "Cash register name" },
         "cashierId": { "type": "string", "description": "Cashier ID" },
@@ -91,39 +154,14 @@
         "totalExpenses": { "type": "number", "description": "Total manual cash withdrawals" },
         "notes": { "type": "string", "description": "Shift cut notes" },
         "status": { "type": "string", "description": "OPEN or CLOSED" }
-      }
+      },
+      "required": ["registerId", "cashierId", "openedAt", "status"]
     },
-    "cashiers": {
-      "description": "Point of sale cashiers and staff",
-      "fields": {
-        "name": { "type": "string", "description": "Cashier full name" },
-        "pin": { "type": "string", "description": "Security access PIN" },
-        "role": { "type": "string", "description": "ADMIN or CASHIER" },
-        "permissions": { "type": "map", "description": "Permission flags" }
-      }
-    },
-    "holdTickets": {
-      "description": "Tickets put on hold",
-      "fields": {
-        "label": { "type": "string", "description": "Ticket description label" },
-        "registerId": { "type": "string", "description": "Terminal register ID" },
-        "items": { "type": "array", "description": "Cart items" },
-        "customerId": { "type": "string", "description": "Customer ID if assigned" },
-        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
-      }
-    },
-    "commonProducts": {
-      "description": "Quick pick common products",
-      "fields": {
-        "name": { "type": "string", "description": "Item name" },
-        "price": { "type": "number", "description": "Price" },
-        "category": { "type": "string", "description": "Category" },
-        "iconName": { "type": "string", "description": "Lucide icon key" }
-      }
-    },
-    "movements": {
-      "description": "Cash drawer movement logs and customer debt payments",
-      "fields": {
+    "CashMovement": {
+      "title": "CashMovement",
+      "description": "Cash drawer movement logs and debt payments",
+      "type": "object",
+      "properties": {
         "shiftId": { "type": "string", "description": "Cash shift ID" },
         "registerId": { "type": "string", "description": "Terminal register ID" },
         "cashierId": { "type": "string", "description": "Cashier ID" },
@@ -133,7 +171,250 @@
         "amount": { "type": "number", "description": "Amount" },
         "reason": { "type": "string", "description": "Description reason" },
         "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["shiftId", "registerId", "type", "amount", "createdAt"]
+    },
+    "Cashier": {
+      "title": "Cashier",
+      "description": "Point of sale cashiers and administrators",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Cashier full name" },
+        "pin": { "type": "string", "description": "Security access PIN" },
+        "role": { "type": "string", "description": "ADMIN or CASHIER" },
+        "permissions": { "type": "string", "description": "Permissions map" }
+      },
+      "required": ["name", "pin", "role"]
+    },
+    "Supplier": {
+      "title": "Supplier",
+      "description": "Merchandise suppliers and vendors",
+      "type": "object",
+      "properties": {
+        "taxId": { "type": "string", "description": "Supplier Tax ID / RFC / CUIT" },
+        "name": { "type": "string", "description": "Supplier business name" },
+        "contactName": { "type": "string", "description": "Contact representative name" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "email": { "type": "string", "description": "Email address" },
+        "address": { "type": "string", "description": "Physical address" },
+        "category": { "type": "string", "description": "Supplier category" },
+        "paymentTermsDays": { "type": "number", "description": "Credit terms in days" },
+        "balance": { "type": "number", "description": "Outstanding debt balance" },
+        "notes": { "type": "string", "description": "Supplier notes" }
+      },
+      "required": ["name"]
+    },
+    "PurchaseInvoice": {
+      "title": "PurchaseInvoice",
+      "description": "Supplier purchase invoices and inventory orders",
+      "type": "object",
+      "properties": {
+        "invoiceNumber": { "type": "string", "description": "Invoice or delivery note number" },
+        "supplierId": { "type": "string", "description": "Supplier ID" },
+        "supplierName": { "type": "string", "description": "Supplier business name" },
+        "date": { "type": "string", "description": "Invoice date (YYYY-MM-DD)" },
+        "dueDate": { "type": "string", "description": "Payment due date (YYYY-MM-DD)" },
+        "items": { "type": "string", "description": "Purchase items array" },
+        "subtotal": { "type": "number", "description": "Subtotal before tax" },
+        "tax": { "type": "number", "description": "Tax total" },
+        "total": { "type": "number", "description": "Total invoice amount" },
+        "paidAmount": { "type": "number", "description": "Amount paid so far" },
+        "balance": { "type": "number", "description": "Pending balance" },
+        "paymentStatus": { "type": "string", "description": "PAID, PARTIAL, PENDING, OVERDUE" },
+        "paymentMethod": { "type": "string", "description": "CASH, TRANSFER, CHECK, CREDIT" },
+        "receptionStatus": { "type": "string", "description": "RECEIVED, PENDING, CANCELLED" },
+        "cashierId": { "type": "string", "description": "Registering cashier ID" },
+        "cashierName": { "type": "string", "description": "Registering cashier name" },
+        "notes": { "type": "string", "description": "Invoice notes" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["supplierId", "supplierName", "total", "paymentStatus", "receptionStatus"]
+    },
+    "SupplierPayment": {
+      "title": "SupplierPayment",
+      "description": "Payments and debt settlements made to suppliers",
+      "type": "object",
+      "properties": {
+        "supplierId": { "type": "string", "description": "Supplier ID" },
+        "supplierName": { "type": "string", "description": "Supplier name" },
+        "purchaseId": { "type": "string", "description": "Linked purchase invoice ID" },
+        "invoiceNumber": { "type": "string", "description": "Linked invoice number" },
+        "date": { "type": "string", "description": "Payment date" },
+        "amount": { "type": "number", "description": "Payment amount" },
+        "paymentMethod": { "type": "string", "description": "CASH, TRANSFER, CHECK, CARD" },
+        "reference": { "type": "string", "description": "Bank voucher or transaction reference" },
+        "cashierId": { "type": "string", "description": "Cashier ID" },
+        "cashierName": { "type": "string", "description": "Cashier name" },
+        "registerId": { "type": "string", "description": "Register ID if paid from cash drawer" },
+        "notes": { "type": "string", "description": "Payment notes" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
+      },
+      "required": ["supplierId", "amount", "paymentMethod", "createdAt"]
+    },
+    "FiscalInvoice": {
+      "title": "FiscalInvoice",
+      "description": "Electronic and fiscal tax invoices (CFDI / AFIP)",
+      "type": "object",
+      "properties": {
+        "folio": { "type": "string", "description": "Invoice serial folio (e.g. A-1001)" },
+        "uuid": { "type": "string", "description": "Digital fiscal UUID or authorization code" },
+        "series": { "type": "string", "description": "Invoice series" },
+        "saleId": { "type": "string", "description": "Linked sale ID if created from a sale" },
+        "ticketNumber": { "type": "number", "description": "Linked ticket number" },
+        "customerId": { "type": "string", "description": "Customer ID if registered" },
+        "customerName": { "type": "string", "description": "Customer legal name" },
+        "customerTaxId": { "type": "string", "description": "Customer RFC / CUIT" },
+        "customerTaxRegime": { "type": "string", "description": "Customer tax regime" },
+        "customerCfdiUsage": { "type": "string", "description": "Customer CFDI usage code" },
+        "customerPostalCode": { "type": "string", "description": "Customer fiscal postal code" },
+        "customerFiscalAddress": { "type": "string", "description": "Customer fiscal address" },
+        "customerEmail": { "type": "string", "description": "Customer email for XML/PDF sending" },
+        "issuerTaxId": { "type": "string", "description": "Issuer store RFC / CUIT" },
+        "issuerBusinessName": { "type": "string", "description": "Issuer store legal business name" },
+        "issuerTaxRegime": { "type": "string", "description": "Issuer store tax regime" },
+        "issuerPostalCode": { "type": "string", "description": "Issuer store postal code" },
+        "items": { "type": "string", "description": "Fiscal line items breakdown array" },
+        "subtotal": { "type": "number", "description": "Subtotal before taxes" },
+        "vatAmount": { "type": "number", "description": "Total VAT / IVA amount" },
+        "iepsAmount": { "type": "number", "description": "Total IEPS / Excise tax amount" },
+        "total": { "type": "number", "description": "Total invoiced amount" },
+        "paymentMethod": { "type": "string", "description": "Payment method" },
+        "paymentForm": { "type": "string", "description": "Payment form code (e.g. 01 Efectivo, 04 Tarjeta)" },
+        "status": { "type": "string", "description": "EMITTED, CANCELLED" },
+        "emittedAt": { "type": "string", "description": "ISO timestamp of emission" },
+        "cancelledAt": { "type": "string", "description": "ISO timestamp of cancellation if applicable" },
+        "cancellationReason": { "type": "string", "description": "Reason for cancellation" },
+        "digitalStamp": { "type": "string", "description": "Digital security stamp" },
+        "satStamp": { "type": "string", "description": "Fiscal authority digital stamp" },
+        "digitalCertificateNumber": { "type": "string", "description": "Digital certificate number" },
+        "xmlContent": { "type": "string", "description": "Structured XML document representation" },
+        "registerId": { "type": "string", "description": "Issuing cash register ID" },
+        "cashierId": { "type": "string", "description": "Issuing cashier ID" },
+        "cashierName": { "type": "string", "description": "Issuing cashier name" }
+      },
+      "required": ["folio", "uuid", "total", "status", "emittedAt"]
+    },
+    "Promotion": {
+      "title": "Promotion",
+      "description": "Discount promotions, bulk pricing, and combo offers",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Promotion name" },
+        "type": { "type": "string", "description": "PERCENTAGE, FIXED_DISCOUNT, BOGO_2X1, BUY_X_GET_Y, COMBO, BULK_PRICE" },
+        "discountValue": { "type": "number", "description": "Discount amount or percentage" },
+        "active": { "type": "boolean", "description": "Whether promotion is currently active" }
+      },
+      "required": ["name", "type", "active"]
+    },
+    "HoldTicket": {
+      "title": "HoldTicket",
+      "description": "Parked or suspended ticket carts",
+      "type": "object",
+      "properties": {
+        "label": { "type": "string", "description": "Hold ticket label" },
+        "registerId": { "type": "string", "description": "Terminal register ID" },
+        "items": { "type": "string", "description": "Cart items array" },
+        "customerId": { "type": "string", "description": "Customer ID if assigned" },
+        "createdAt": { "type": "string", "description": "ISO creation timestamp" }
+      },
+      "required": ["label", "registerId", "createdAt"]
+    },
+    "CommonProduct": {
+      "title": "CommonProduct",
+      "description": "Quick select common products",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Item display name" },
+        "price": { "type": "number", "description": "Item price" },
+        "category": { "type": "string", "description": "Category" },
+        "iconName": { "type": "string", "description": "Icon key name" }
+      },
+      "required": ["name", "price"]
+    },
+    "SystemConfig": {
+      "title": "SystemConfig",
+      "description": "Store fiscal and POS configuration documents",
+      "type": "object",
+      "properties": {
+        "value": { "type": "number", "description": "Numerical sequence or setting value" },
+        "shortcuts": { "type": "string", "description": "Keyboard shortcuts array" },
+        "storeFiscalConfig": { "type": "string", "description": "Store fiscal details map" },
+        "employeeDiscount": { "type": "string", "description": "Employee discount configuration map" }
       }
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Product items catalog and stock levels"
+    },
+    "/departments/{departmentId}": {
+      "schema": "Department",
+      "description": "Product categories and departments"
+    },
+    "/customers/{customerId}": {
+      "schema": "Customer",
+      "description": "Customer accounts, credit limits and fiscal information"
+    },
+    "/customerMovements/{movementId}": {
+      "schema": "CustomerCreditMovement",
+      "description": "Ledger of customer credit debts and payments"
+    },
+    "/sales/{saleId}": {
+      "schema": "Sale",
+      "description": "Point of sale sales tickets and payment records"
+    },
+    "/returns/{returnId}": {
+      "schema": "SaleReturn",
+      "description": "Merchandise return and refund records"
+    },
+    "/registers/{registerId}": {
+      "schema": "CashRegister",
+      "description": "Cash register terminals"
+    },
+    "/shifts/{shiftId}": {
+      "schema": "CashShift",
+      "description": "Cash register shifts and register cuts"
+    },
+    "/cashMovements/{movementId}": {
+      "schema": "CashMovement",
+      "description": "Cash drawer manual inputs, withdrawals, and customer debt payments"
+    },
+    "/cashiers/{cashierId}": {
+      "schema": "Cashier",
+      "description": "Cashier and administrator profiles with PIN security"
+    },
+    "/suppliers/{supplierId}": {
+      "schema": "Supplier",
+      "description": "Merchandise suppliers, credit terms, and accounts payable"
+    },
+    "/purchases/{purchaseId}": {
+      "schema": "PurchaseInvoice",
+      "description": "Supplier purchase invoices and inventory replenishment receipts"
+    },
+    "/supplierPayments/{paymentId}": {
+      "schema": "SupplierPayment",
+      "description": "Supplier debt payments and disbursement ledger"
+    },
+    "/fiscalInvoices/{invoiceId}": {
+      "schema": "FiscalInvoice",
+      "description": "Official electronic and fiscal invoices (CFDI/AFIP)"
+    },
+    "/promotions/{promotionId}": {
+      "schema": "Promotion",
+      "description": "Discount promotions, bulk pricing, and combo rules"
+    },
+    "/holdTickets/{ticketId}": {
+      "schema": "HoldTicket",
+      "description": "Suspended tickets and parked carts"
+    },
+    "/commonProducts/{commonProductId}": {
+      "schema": "CommonProduct",
+      "description": "Quick select common goods"
+    },
+    "/config/{configDocId}": {
+      "schema": "SystemConfig",
+      "description": "Global store configuration and sequence counters"
     }
   }
 }

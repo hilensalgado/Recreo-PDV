@@ -73,3 +73,50 @@ export function exportSalesCSV(sales: any[]) {
   const dateStr = new Date().toISOString().split('T')[0];
   downloadCSV(`reporte_ventas_${dateStr}.csv`, csvContent);
 }
+
+export function exportPurchaseListCSV(
+  items: Array<{
+    barcode: string;
+    name: string;
+    departmentName?: string;
+    stock: number;
+    minStock: number;
+    unit?: string;
+    costPrice: number;
+    suggestedQty: number;
+  }>
+) {
+  const headers = [
+    'Codigo',
+    'Producto',
+    'Departamento',
+    'Stock Actual',
+    'Stock Minimo',
+    'Unidad',
+    'Cantidad a Pedir',
+    'Precio Costo Unitario',
+    'Total Estimado Costo',
+  ];
+
+  const rows = items.map((p) => {
+    const qty = p.suggestedQty ?? Math.max(1, (p.minStock || 5) * 2 - (p.stock || 0));
+    const unitCost = p.costPrice || 0;
+    const totalEst = qty * unitCost;
+
+    return [
+      `"${p.barcode || ''}"`,
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${p.departmentName || 'General'}"`,
+      p.stock ?? 0,
+      p.minStock ?? 0,
+      `"${p.unit === 'kg' ? 'kg' : 'pzs'}"`,
+      qty,
+      unitCost.toFixed(2),
+      totalEst.toFixed(2),
+    ];
+  });
+
+  const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const dateStr = new Date().toISOString().split('T')[0];
+  downloadCSV(`lista_de_compras_recreo_${dateStr}.csv`, csvContent);
+}

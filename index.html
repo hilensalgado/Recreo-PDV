@@ -1,18 +1,38 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Recreo PDV - Sistema de Punto de Venta</title>
-    <meta name="description" content="Recreo PDV - Sistema de Punto de Venta comercial para control de caja, inventario y ventas." />
-    <meta property="og:title" content="Recreo PDV - Sistema de Punto de Venta" />
-    <meta property="og:description" content="Recreo PDV - Sistema de Punto de Venta comercial para control de caja, inventario y ventas." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Eleventa Punto de Venta Multi-Caja</title>
+    <meta name="description" content="Sistema de Punto de Venta (PDV) profesional con control de inventario avanzado, programa de fidelización, motor inteligente de promociones y combos, soporte multi-caja y cortes de turno." />
+    
+    <!-- PWA & Mobile Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Eleventa PDV" />
+    <link rel="apple-touch-icon" href="/icon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+    <meta property="og:title" content="Eleventa Punto de Venta Multi-Caja" />
+    <meta property="og:description" content="Sistema de Punto de Venta (PDV) profesional con control de inventario avanzado, programa de fidelización, motor inteligente de promociones y combos, soporte multi-caja y cortes de turno." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch((err) => {
+            console.log('SW registration note:', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
 
