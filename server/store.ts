@@ -722,14 +722,15 @@ class DatabaseManager {
     return obj;
   }
 
-  private async persistDoc(collName: string, docId: string, data: any) {
+  private async persistDoc(collName: string, docId: string, data: any): Promise<void> {
     this.emitSync(collName, { docId, data });
     if (!this.firestore) return;
     try {
       const sanitized = this.sanitizeForFirestore(data);
       await setDoc(doc(this.firestore, collName, docId), sanitized, { merge: true });
     } catch (err) {
-      console.error(`[Firebase] Error al guardar documento ${collName}/${docId}:`, err);
+      console.error(`[Firebase] Error crítico al guardar documento ${collName}/${docId}:`, err);
+      throw err;
     }
   }
 
