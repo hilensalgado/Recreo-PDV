@@ -2265,6 +2265,8 @@ class DatabaseManager {
     this.persistDoc('shifts', shift.id, shift);
 
     const ticketNum = this.data.ticketCounter++;
+    const regCode = (register.code || register.id || 'REG').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const formattedTicketNumber = `${regCode}-${ticketNum}`;
     this.persistDoc('config', 'ticketCounter', { value: this.data.ticketCounter });
 
     // 8. Update Customer Loyalty Points
@@ -2288,7 +2290,7 @@ class DatabaseManager {
           type: 'EARNED',
           points: pointsEarned,
           balanceAfter: finalPoints,
-          description: `Puntos acumulados por compra Ticket #${ticketNum}`,
+          description: `Puntos acumulados por compra Ticket #${formattedTicketNumber}`,
           date: new Date().toISOString(),
           timestamp: new Date().toISOString(),
           saleId: `sale-${Date.now()}`,
@@ -2306,7 +2308,7 @@ class DatabaseManager {
           type: 'REDEEMED',
           points: pointsRedeemed,
           balanceAfter: customer.points || 0,
-          description: `Canje de puntos en Ticket #${ticketNum} (-$${pointsDiscountAmount.toFixed(2)})`,
+          description: `Canje de puntos en Ticket #${formattedTicketNumber} (-$${pointsDiscountAmount.toFixed(2)})`,
           date: new Date().toISOString(),
           timestamp: new Date().toISOString(),
           saleId: `sale-${Date.now()}`,
@@ -2321,6 +2323,7 @@ class DatabaseManager {
     const newSale: Sale = {
       id,
       ticketNumber: ticketNum,
+      formattedTicketNumber,
       registerId: register.id,
       registerName: register.name,
       cashierId: saleData.cashierId,

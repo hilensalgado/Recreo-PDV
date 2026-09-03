@@ -239,7 +239,8 @@ export type PaymentMethod = 'EFECTIVO' | 'TARJETA' | 'CREDITO' | 'MIXTO' | 'TRAN
 
 export interface Sale {
   id: string;
-  ticketNumber: number;
+  ticketNumber: number | string;
+  formattedTicketNumber?: string;
   registerId: string;
   registerName: string;
   cashierId: string;
