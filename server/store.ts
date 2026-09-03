@@ -2055,6 +2055,23 @@ class DatabaseManager {
         if (product.stock < item.quantity) {
           throw new Error(`Stock insuficiente para "${product.name}": Se solicitaron ${item.quantity} unidades pero solo hay ${product.stock} en existencia.`);
         }
+
+        const todayStr = new Date().toISOString().slice(0, 10);
+        const productBatches = (this.data.batches || []).filter(
+          b => (b.productId === product.id || (b.barcode && b.barcode === product.barcode)) && b.currentQuantity > 0
+        );
+        if (productBatches.length > 0) {
+          const activeValidBatches = productBatches.filter(
+            b => b.status === 'ACTIVE' && b.expirationDate >= todayStr
+          );
+          const expiredBatches = productBatches.filter(
+            b => b.expirationDate < todayStr
+          );
+          if (activeValidBatches.length === 0 && expiredBatches.length > 0) {
+            const expiredBatch = expiredBatches[0];
+            throw new Error(`Bloqueo Sanitario / Caducidad: No se puede vender "${product.name}". El lote disponible (${expiredBatch.batchNumber}) venció el ${expiredBatch.expirationDate}. Retirar de góndola.`);
+          }
+        }
       }
     }
 
@@ -2198,8 +2215,9 @@ class DatabaseManager {
 
           // Deduct FIFO from active product batches if present
           let remainingQtyToDeduct = item.quantity;
+          const todayStr = new Date().toISOString().slice(0, 10);
           const activeBatches = (this.data.batches || [])
-            .filter(b => (b.productId === product.id || (b.barcode && b.barcode === product.barcode)) && b.status === 'ACTIVE' && b.currentQuantity > 0)
+            .filter(b => (b.productId === product.id || (b.barcode && b.barcode === product.barcode)) && b.status === 'ACTIVE' && b.expirationDate >= todayStr && b.currentQuantity > 0)
             .sort((a, b) => new Date(a.expirationDate).getTime() - new Date(b.expirationDate).getTime());
 
           for (const b of activeBatches) {
